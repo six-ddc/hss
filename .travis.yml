@@ -1,0 +1,20 @@
+language: c
+
+sudo: required
+
+os:
+    - linux
+
+compiler:
+    - gcc
+
+before_install:
+    - sudo apt-get update
+    - sudo apt-get install libreadline6-dev
+
+install:
+    - make
+    - sudo make install
+
+script:
+    - hss -h
