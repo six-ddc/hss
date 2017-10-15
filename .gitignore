@@ -1,0 +1,4 @@
+*.o
+command/*.o
+tags
+hss
