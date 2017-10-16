@@ -54,6 +54,7 @@ extern struct command *inner_commands;
 extern struct hss_config {
     int conn_timeout;
     bool verbose;
+    char* identity_file;
 } *pconfig;
 
 #endif //_HSS_COMMON_H_

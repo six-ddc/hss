@@ -58,12 +58,18 @@ exec_ssh_cmd(struct slot *pslot, char *cmd) {
         eprintf("failed to dup stderr: %s\n", strerror(errno));
     }
 
-    snprintf(timeout_argv, sizeof timeout_argv, "-oConnectTimeout=%d", pconfig->conn_timeout);
-
     ssh_argv[idx++] = "-q";
     ssh_argv[idx++] = "-oNumberOfPasswordPrompts=0";
     ssh_argv[idx++] = "-oStrictHostKeyChecking=no";
+
+    snprintf(timeout_argv, sizeof timeout_argv, "-oConnectTimeout=%d", pconfig->conn_timeout);
     ssh_argv[idx++] = timeout_argv;
+
+    if (pconfig->identity_file) {
+        ssh_argv[idx++] = "-i";
+        ssh_argv[idx++] = pconfig->identity_file;
+    }
+
     for (i = 0; i < pslot->ssh_argc; ++i) {
         ssh_argv[idx++] = pslot->ssh_argv[i];
     }
@@ -160,7 +166,7 @@ exec_remote_cmd(struct slot *pslot, char *cmd) {
         if (pslot) {
             fork_ssh(pslot, cmd);
             pslot = pslot->next;
-            usleep(100 * 1000);
+            usleep(10 * 1000);
         }
 
         read_dead_slots(pslot_head, pslot);

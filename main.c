@@ -170,15 +170,17 @@ init_inner_commands() {
 
 void usage(const char *msg) {
     if (!msg) {
-        eprintf("Usage: hss [-f hostfile] [command]\n\n"
-                        "Options:\n"
-                        "  -f, --file=FILE     file with the list of hosts or - for stdin\n"
-                        "  -t, --conn-timeout  ssh connect timeout (default %d sec)\n"
-                        "  -v, --verbose       be more verbose (i.e. show ssh command)\n"
-                        "  -V, --version       show program version\n"
-                        "  -h, --help          display this message\n"
-                        "\n", default_conn_timeout
-        );
+        eprintf("\n"
+                "Usage: hss [-f hostfile] [command]\n\n"
+                "Options:\n"
+                "  -f, --file=FILE           file with the list of hosts or - for stdin\n"
+                "  -i, --identity-file=FILE  specifies a identity (private key) authentication file\n"
+                "  -t, --conn-timeout        ssh connect timeout (default %d sec)\n"
+                "  -v, --verbose             be more verbose (i.e. show ssh command)\n"
+                "  -V, --version             show program version\n"
+                "  -h, --help                display this message\n"
+                "\n", default_conn_timeout
+               );
         exit(0);
     } else {
         eprintf("%s\n", msg);
@@ -197,14 +199,15 @@ parse_opts(int argc, char **argv) {
     int opt;
 
     static struct option long_opts[] = {
-            {"help",         no_argument,       NULL, 'h'},
-            {"file",         required_argument, NULL, 'f'},
-            {"conn-timeout", required_argument, NULL, 't'},
-            {"verbose",      no_argument,       NULL, 'v'},
-            {"version",      no_argument,       NULL, 'V'},
-            {NULL, 0,                           NULL, 0}
+            {"help",          no_argument,       NULL, 'h'},
+            {"file",          required_argument, NULL, 'f'},
+            {"identity-file", required_argument, NULL, 'i'},
+            {"conn-timeout",  required_argument, NULL, 't'},
+            {"verbose",       no_argument,       NULL, 'v'},
+            {"version",       no_argument,       NULL, 'V'},
+            {NULL,            0,                 NULL, 0}
     };
-    const char *short_opts = "hf:t:Vv";
+    const char *short_opts = "hf:i:t:Vv";
 
     pconfig = calloc(1, sizeof(struct hss_config));
     pconfig->conn_timeout = default_conn_timeout;
@@ -216,6 +219,9 @@ parse_opts(int argc, char **argv) {
                 break;
             case 'f':
                 add_hostfile(optarg);
+                break;
+            case 'i':
+                pconfig->identity_file = optarg;
                 break;
             case 't':
                 pconfig->conn_timeout = (int) strtol(optarg, NULL, 10);
