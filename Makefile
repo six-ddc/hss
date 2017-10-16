@@ -1,15 +1,10 @@
 default: all
 
-LDFLAGS=-L/usr/local/opt/readline/lib -L/usr/local/lib -L/usr/lib64 -L/usr/lib
 CFLAGS=-I/usr/local/opt/readline/include -O3 -Wall
 LIBS=-lreadline
 
-UNAME := $(shell uname)
-ifeq ($(UNAME), Linux)
-	LDFLAGS=-L/usr/local/lib -L/usr/lib64 -L/usr/lib
-endif
-ifeq ($(UNAME), Darwin)
-	LDFLAGS=-L/usr/local/opt/readline/lib -L/usr/local/lib -L/usr/lib
+ifeq ($(shell uname), Darwin)
+	LDFLAGS=-L/usr/local/opt/readline/lib
 endif
 
 INSTALL=install
