@@ -31,7 +31,6 @@ enum state {
     REMOTE,
     INNER,
     LOCAL,
-    PLACEHOLDER,
 } running_state = REMOTE;
 
 /* Forward declarations. */
@@ -84,7 +83,7 @@ update_completion_function() {
 
 static int
 key_esc_handler(int count, int key) {
-    running_state = (running_state + 1) % PLACEHOLDER;
+    running_state = (running_state + 1) % LOCAL;
     update_completion_function();
 
     rl_on_new_line_with_prompt();
