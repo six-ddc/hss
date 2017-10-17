@@ -174,6 +174,7 @@ void usage(const char *msg) {
                 "Usage: hss [-f hostfile] [command]\n\n"
                 "Options:\n"
                 "  -f, --file=FILE           file with the list of hosts or - for stdin\n"
+                "  -H, --host                specifies a host option\n"
                 "  -i, --identity-file=FILE  specifies a identity (private key) authentication file\n"
                 "  -t, --conn-timeout        ssh connect timeout (default %d sec)\n"
                 "  -v, --verbose             be more verbose (i.e. show ssh command)\n"
@@ -201,13 +202,14 @@ parse_opts(int argc, char **argv) {
     static struct option long_opts[] = {
             {"help",          no_argument,       NULL, 'h'},
             {"file",          required_argument, NULL, 'f'},
+            {"host",          required_argument, NULL, 'H'},
             {"identity-file", required_argument, NULL, 'i'},
             {"conn-timeout",  required_argument, NULL, 't'},
             {"verbose",       no_argument,       NULL, 'v'},
             {"version",       no_argument,       NULL, 'V'},
             {NULL,            0,                 NULL, 0}
     };
-    const char *short_opts = "hf:i:t:Vv";
+    const char *short_opts = "hf:H:i:t:Vv";
 
     pconfig = calloc(1, sizeof(struct hss_config));
     pconfig->conn_timeout = default_conn_timeout;
@@ -219,6 +221,9 @@ parse_opts(int argc, char **argv) {
                 break;
             case 'f':
                 add_hostfile(optarg);
+                break;
+            case 'H':
+                add_host(optarg);
                 break;
             case 'i':
                 pconfig->identity_file = optarg;

@@ -48,7 +48,7 @@ remote_filepath_completion_func(const char *text, int start, int end) {
     char **matches = NULL;
     sstring out;
 
-    if (start != end && text[0] == '/') {
+    if (start != end && (text[0] == '/' || text[0] == '~' || text[0] == '.')) {
         snprintf(cmd, 1024, "command ls -aF1d %s*", text);
     } else {
         strcpy(cmd, "command echo $PATH | command tr ':' '\n' | while read path; do command ls -1a $path; done");
