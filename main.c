@@ -241,10 +241,10 @@ parse_opts(int argc, char **argv) {
             case 'o':
                 pconfig->output_file = new_string(optarg);
                 break;
-            case 'V':
+            case 'v':
                 pconfig->verbose = true;
                 break;
-            case 'v':
+            case 'V':
                 print_version();
                 break;
             default:
