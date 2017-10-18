@@ -257,6 +257,7 @@ parse_opts(int argc, char **argv) {
 
     if (slots == NULL) {
         eprintf("ssh slots is empty\n");
+        running_state = INNER;
     }
 
     if (argc == 0) {
