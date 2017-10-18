@@ -172,15 +172,20 @@ init_inner_commands() {
 void usage(const char *msg) {
     if (!msg) {
         eprintf("\n"
-                "Usage: hss [-f hostfile] [command]\n\n"
+                "An interactive parallel ssh client.\n"
+                "\n"
+                "Usage: hss [-f hostfile] [-o file] [command]\n\n"
                 "Options:\n"
                 "  -f, --file=FILE           file with the list of hosts or - for stdin\n"
                 "  -H, --host                specifies a host option\n"
                 "  -i, --identity-file=FILE  specifies a identity (private key) authentication file\n"
                 "  -t, --conn-timeout        ssh connect timeout (default %d sec)\n"
+                "  -o, --output=FILE         write remote command output to a file\n"
                 "  -v, --verbose             be more verbose (i.e. show ssh command)\n"
                 "  -V, --version             show program version\n"
                 "  -h, --help                display this message\n"
+                "\n"
+                "For more information, see https://github.com/six-ddc/hss"
                 "\n", default_conn_timeout
                );
         exit(0);
@@ -206,11 +211,12 @@ parse_opts(int argc, char **argv) {
             {"host",          required_argument, NULL, 'H'},
             {"identity-file", required_argument, NULL, 'i'},
             {"conn-timeout",  required_argument, NULL, 't'},
+            {"output",        required_argument, NULL, 'o'},
             {"verbose",       no_argument,       NULL, 'v'},
             {"version",       no_argument,       NULL, 'V'},
             {NULL,            0,                 NULL, 0}
     };
-    const char *short_opts = "hf:H:i:t:Vv";
+    const char *short_opts = "hf:H:i:t:o:Vv";
 
     pconfig = calloc(1, sizeof(struct hss_config));
     pconfig->conn_timeout = default_conn_timeout;
@@ -231,6 +237,9 @@ parse_opts(int argc, char **argv) {
                 break;
             case 't':
                 pconfig->conn_timeout = (int) strtol(optarg, NULL, 10);
+                break;
+            case 'o':
+                pconfig->output_file = new_string(optarg);
                 break;
             case 'V':
                 pconfig->verbose = true;
