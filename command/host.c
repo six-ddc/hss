@@ -5,10 +5,11 @@
 static void
 print_host_usage() {
     eprintf("Usage: host <command>\n"
-                    "Commands:\n"
-                    "  list               : list all ssh slots\n"
-                    "  add <ssh_options>  : add a ssh slot\n"
-                    "  del <ssh_host>     : delete special ssh slot\n"
+            "\n"
+            "Commands:\n"
+            "  list               : list all ssh slots\n"
+            "  add <ssh_options>  : add a ssh slot\n"
+            "  del <ssh_host>     : delete special ssh slot\n"
     );
 }
 
@@ -36,31 +37,37 @@ host_list(int argc, const char **argv) {
 
 static int
 host_del(int argc, const char **argv) {
+    int i;
     if (argc < 2) {
         printf("\"host del\" requires at least 1 argument\n\n");
         print_host_usage();
         return -1;
     }
-    slots = slot_del_by_host(slots, argv[1]);
+    for (i = 1; i < argc; ++i) {
+        slots = slot_del_by_host(slots, argv[i]);
+    }
     return 0;
 }
 
 static int
 host_add(int argc, const char **argv) {
     struct slot *pslot;
+    int i;
     if (argc < 2) {
         printf("\"host add\" requires at least 1 argument\n\n");
         print_host_usage();
         return -1;
     }
-    pslot = new_slot(argv[1]);
-    if (!pslot) {
-        return -1;
-    }
-    if (!slots) {
-        slots = pslot;
-    } else {
-        slot_append(slots, pslot);
+    for (i = 1; i < argc; ++i) {
+        pslot = new_slot(argv[i]);
+        if (!pslot) {
+            continue;
+        }
+        if (!slots) {
+            slots = pslot;
+        } else {
+            slot_append(slots, pslot);
+        }
     }
     return 0;
 }
@@ -76,7 +83,7 @@ inner_command_host(char *args) {
     }
     ret = parse_argv_string(args, &argc, &argv);
     if (ret != 0) {
-        eprintf("unable parse command [%s]\n", args);
+        eprintf("unable parse command \"%s\"\n", args);
         return -1;
     }
     if (strcmp(argv[0], "list") == 0) {
@@ -88,7 +95,7 @@ inner_command_host(char *args) {
     } else if (strcmp(argv[0], "del") == 0) {
         host_del(argc, argv);
     } else {
-        eprintf("invalid child command [%s]\n", argv[0]);
+        eprintf("invalid child command \"%s\"\n", argv[0]);
     }
     free(argv);
     return 0;

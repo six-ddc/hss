@@ -32,7 +32,10 @@ command/help.o: command/help.c
 command/host.o: command/host.c
 	$(CC) $(CFLAGS) -c command/host.c -o command/host.o
 
-all: main.o sstring.o slot.o completion.o executor.o command/help.o command/host.o
+command/config.o: command/config.c
+	$(CC) $(CFLAGS) -c command/config.c -o command/config.o
+
+all: main.o sstring.o slot.o completion.o executor.o command/help.o command/host.o command/config.o
 	$(CC) $(CFLAGS) $(LIBS) main.o sstring.o slot.o completion.o executor.o command/*.o -o $(HSS_BIN) $(LDFLAGS)
 
 install:

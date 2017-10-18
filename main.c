@@ -11,6 +11,7 @@
 #include "command.h"
 #include "command/help.h"
 #include "command/host.h"
+#include "command/config.h"
 
 const char *HSS_VERSION = "1.0-beta";
 
@@ -165,6 +166,7 @@ void
 init_inner_commands() {
     inner_commands = register_help();
     inner_commands = register_host();
+    inner_commands = register_config();
 }
 
 void usage(const char *msg) {
@@ -274,7 +276,7 @@ main(int argc, char **argv) {
     init_inner_commands();
 
     /* initialize readline */
-    rl_readline_name = "pssh";
+    rl_readline_name = "hss";
     rl_bind_key(27, key_esc_handler);
     rl_initialize();
 

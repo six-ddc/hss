@@ -21,8 +21,12 @@ volatile int alive_children = 0;
 
 static void
 print_line(struct slot *pslot, int io_type, sstring buf, void *data) {
-    printf(ANSI_COLOR_GREEN "%s -> " ANSI_COLOR_RESET "%s", pslot->host, buf);
-    fflush(stdout);
+    FILE *output = (FILE *) data;
+    if (output == stdout) {
+        printf(ANSI_COLOR_GREEN "%s -> " ANSI_COLOR_RESET, pslot->host);
+    }
+    fwrite(buf, 1, string_length(buf), output);
+    fflush(output);
 }
 
 static void
@@ -102,7 +106,7 @@ fork_ssh(struct slot *pslot, char *cmd) {
             close(pslot->io.err[PIPE_WRITE_END]);
             alive_children++;
             if (pconfig->verbose) {
-                printf("pid [%d] run in main thread, host: %s\n", pslot->pid, pslot->host);
+                printf("pid \"%d\" run in main thread, host: %s\n", pslot->pid, pslot->host);
             }
             break;
     }
@@ -123,28 +127,28 @@ fdset_alive_slots(struct slot *pslot, fd_set *readfds) {
 }
 
 static void
-read_alive_slots(struct slot *pslot, fd_set *readfds) {
+read_alive_slots(struct slot *pslot, fd_set *readfds, FILE *output) {
     while (pslot) {
         if (!pslot->alive) {
             pslot = pslot->next;
             continue;
         }
         if (FD_ISSET(pslot->io.out[PIPE_READ_END], readfds)) {
-            slot_read_line(pslot, STDOUT_FILENO, print_line, NULL);
+            slot_read_line(pslot, STDOUT_FILENO, print_line, output);
         }
         if (FD_ISSET(pslot->io.err[PIPE_READ_END], readfds)) {
-            slot_read_line(pslot, STDERR_FILENO, print_line, NULL);
+            slot_read_line(pslot, STDERR_FILENO, print_line, output);
         }
         pslot = pslot->next;
     }
 }
 
 static void
-read_dead_slots(struct slot *pslot, struct slot *pslot_end) {
+read_dead_slots(struct slot *pslot, struct slot *pslot_end, FILE *output) {
     while (pslot) {
         if (!pslot->alive) {
-            slot_read_remains(pslot, STDOUT_FILENO, print_line, NULL);
-            slot_read_remains(pslot, STDERR_FILENO, print_line, NULL);
+            slot_read_remains(pslot, STDOUT_FILENO, print_line, output);
+            slot_read_remains(pslot, STDERR_FILENO, print_line, output);
         }
         pslot = pslot->next;
     }
@@ -156,8 +160,19 @@ exec_remote_cmd(struct slot *pslot, char *cmd) {
     struct slot *pslot_head = pslot;
     struct timeval no_timeout;
     struct timeval *timeout;
+    FILE *output;
 
     memset(&no_timeout, 0, sizeof(struct timeval));
+
+    if (pconfig->output_file && strcmp(pconfig->output_file, "-") != 0) {
+        output = fopen(pconfig->output_file, "a");
+        if (!output) {
+            eprintf("Can not open file %s (%s)\n", pconfig->output_file, strerror(errno));
+            return -1;
+        }
+    } else {
+        output = stdout;
+    }
 
     alive_children = 0;
 
@@ -169,7 +184,7 @@ exec_remote_cmd(struct slot *pslot, char *cmd) {
             usleep(10 * 1000);
         }
 
-        read_dead_slots(pslot_head, pslot);
+        read_dead_slots(pslot_head, pslot, output);
 
         FD_ZERO(&readfds);
         fdset_alive_slots(pslot_head, &readfds);
@@ -181,12 +196,16 @@ exec_remote_cmd(struct slot *pslot, char *cmd) {
         }
 
         if (select(MAXFD, &readfds, NULL, NULL, timeout) > 0) {
-            read_alive_slots(pslot_head, &readfds);
+            read_alive_slots(pslot_head, &readfds, output);
         }
         UNBLOCK_SIGCHLD;
     }
 
-    read_dead_slots(pslot_head, pslot);
+    read_dead_slots(pslot_head, pslot, output);
+
+    if (output != stdout) {
+        fclose(output);
+    }
 
     return 0;
 }

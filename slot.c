@@ -65,7 +65,7 @@ new_slot(const char *args) {
     }
     ret = parse_argv_string(args, &pslot->ssh_argc, (const char ***) &pslot->ssh_argv);
     if (ret != 0 || pslot->ssh_argc == 0) {
-        eprintf("failed to parse ssh options [%s] into args array", args);
+        eprintf("failed to parse ssh options \"%s\" into args array", args);
         free(pslot);
         return NULL;
     }
