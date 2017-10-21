@@ -55,6 +55,7 @@ extern struct hss_config {
     int conn_timeout;
     bool verbose;
     char* identity_file;
+    char* user;
     char* output_file;
 } *pconfig;
 

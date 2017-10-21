@@ -43,6 +43,7 @@ save_string(struct slot *pslot, int io_type, sstring buf, void *data) {
 static void
 exec_ssh_cmd(struct slot *pslot, char *cmd) {
     char timeout_argv[64];
+    char host_argv[256];
     char *ssh_argv[128];
     int idx = 0;
     int i;
@@ -75,7 +76,16 @@ exec_ssh_cmd(struct slot *pslot, char *cmd) {
     }
 
     for (i = 0; i < pslot->ssh_argc; ++i) {
-        ssh_argv[idx++] = pslot->ssh_argv[i];
+        if (i == pslot->ssh_argc - 1 && pconfig->user) {
+            if (!strchr(pslot->ssh_argv[i], '@')) {
+                snprintf(host_argv, sizeof host_argv, "%s@%s", pconfig->user, pslot->ssh_argv[i]);
+                ssh_argv[idx++] = host_argv;
+            } else {
+                ssh_argv[idx++] = pslot->ssh_argv[i];
+            }
+        } else {
+            ssh_argv[idx++] = pslot->ssh_argv[i];
+        }
     }
     ssh_argv[idx++] = cmd;
     ssh_argv[idx++] = NULL;

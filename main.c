@@ -173,11 +173,12 @@ void usage(const char *msg) {
         eprintf("\n"
                 "An interactive parallel ssh client.\n"
                 "\n"
-                "Usage: hss [-f hostfile] [-o file] [command]\n\n"
+                "Usage: hss [-f hostfile] [-o file] [-u username] [command]\n\n"
                 "Options:\n"
                 "  -f, --file=FILE           file with the list of hosts or - for stdin\n"
-                "  -H, --host                specifies a host option\n"
-                "  -i, --identity-file=FILE  specifies a identity (private key) authentication file\n"
+                "  -H, --host                specifies a host option, support the same options as the ssh command\n"
+                "  -i, --identity-file=FILE  specifies a default identity (private key) authentication file\n"
+                "  -u, --user                the default user name to use when connecting to the remote server\n"
                 "  -t, --conn-timeout        ssh connect timeout (default %d sec)\n"
                 "  -o, --output=FILE         write remote command output to a file\n"
                 "  -v, --verbose             be more verbose (i.e. show ssh command)\n"
@@ -209,13 +210,14 @@ parse_opts(int argc, char **argv) {
             {"file",          required_argument, NULL, 'f'},
             {"host",          required_argument, NULL, 'H'},
             {"identity-file", required_argument, NULL, 'i'},
+            {"user",          required_argument, NULL, 'u'},
             {"conn-timeout",  required_argument, NULL, 't'},
             {"output",        required_argument, NULL, 'o'},
             {"verbose",       no_argument,       NULL, 'v'},
             {"version",       no_argument,       NULL, 'V'},
             {NULL,            0,                 NULL, 0}
     };
-    const char *short_opts = "hf:H:i:t:o:Vv";
+    const char *short_opts = "hf:H:i:u:t:o:Vv";
 
     pconfig = calloc(1, sizeof(struct hss_config));
     pconfig->conn_timeout = default_conn_timeout;
@@ -233,6 +235,9 @@ parse_opts(int argc, char **argv) {
                 break;
             case 'i':
                 pconfig->identity_file = optarg;
+                break;
+            case 'u':
+                pconfig->user = optarg;
                 break;
             case 't':
                 pconfig->conn_timeout = (int) strtol(optarg, NULL, 10);
