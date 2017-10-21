@@ -49,7 +49,7 @@ void
 slot_reinit(struct slot *pslot);
 
 void
-slot_append(struct slot *pslot, struct slot *next);
+slot_append(struct slot *pslot_list, struct slot *next);
 
 void
 slot_close(struct slot *pslot, int exit_code);
@@ -61,9 +61,9 @@ void
 print_slot_args(struct slot *pslot);
 
 struct slot *
-slot_find_by_pid(struct slot *pslot, int pid);
+slot_find_by_pid(struct slot *pslot_list, int pid);
 
-struct slot *
-slot_del_by_host(struct slot *pslot, const char *host);
+void
+slot_del_by_host(struct slot *pslot_list, const char *host);
 
 #endif //_HSS_SLOT_H_

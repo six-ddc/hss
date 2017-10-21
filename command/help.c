@@ -6,9 +6,8 @@ static int
 inner_command_help(char *arg) {
     struct command *pcmd = inner_commands;
     printf("Command:\n");
-    while (pcmd) {
+    while ((pcmd = pcmd->next) != NULL) {
         printf("  %s\t: %s\n", pcmd->name, pcmd->desc);
-        pcmd = pcmd->next;
     }
     return 0;
 }
@@ -19,6 +18,6 @@ register_help() {
     pcmd->name = "help";
     pcmd->func = inner_command_help;
     pcmd->desc = "display this message";
-    pcmd->next = inner_commands;
+    pcmd->next = NULL;
     return pcmd;
 }

@@ -155,12 +155,17 @@ read_dead_slots(struct slot *pslot, struct slot *pslot_end, FILE *output) {
 }
 
 int
-exec_remote_cmd(struct slot *pslot, char *cmd) {
+exec_remote_cmd(struct slot *pslot_list, char *cmd) {
     fd_set readfds;
+    struct slot *pslot = pslot_list->next;
     struct slot *pslot_head = pslot;
     struct timeval no_timeout;
     struct timeval *timeout;
     FILE *output;
+
+    if (!pslot) {
+        return 0;
+    }
 
     memset(&no_timeout, 0, sizeof(struct timeval));
 
@@ -211,9 +216,10 @@ exec_remote_cmd(struct slot *pslot, char *cmd) {
 }
 
 int
-sync_exec_remote_cmd(struct slot *pslot, char *cmd, sstring *out, sstring *err) {
+sync_exec_remote_cmd(struct slot *pslot_list, char *cmd, sstring *out, sstring *err) {
 
     fd_set readfds;
+    struct slot* pslot = pslot_list->next;
 
     if (!pslot) {
         return 0;
@@ -250,11 +256,10 @@ exec_local_cmd(char *cmd) {
 static struct command *
 find_inner_command(char *name) {
     struct command *p = inner_commands;
-    while (p) {
+    while ((p = p->next) != NULL) {
         if (strcmp(name, p->name) == 0) {
             return p;
         }
-        p = p->next;
     }
     return NULL;
 }

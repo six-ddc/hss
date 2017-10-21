@@ -96,7 +96,8 @@ slot_reinit(struct slot *pslot) {
 }
 
 void
-slot_append(struct slot *pslot, struct slot *next) {
+slot_append(struct slot *pslot_list, struct slot *next) {
+    struct slot *pslot = pslot_list;
     while (pslot->next) {
         pslot = pslot->next;
     }
@@ -120,12 +121,12 @@ slot_free(struct slot *pslot) {
 }
 
 struct slot *
-slot_find_by_pid(struct slot *pslot, int pid) {
-    while (pslot) {
+slot_find_by_pid(struct slot *pslot_list, int pid) {
+    struct slot* pslot = pslot_list;
+    while ((pslot = pslot->next) != NULL) {
         if (pslot->pid == pid) {
             return pslot;
         }
-        pslot = pslot->next;
     }
     return NULL;
 }
@@ -141,17 +142,13 @@ print_slot_args(struct slot *pslot) {
     }
 }
 
-struct slot *
-slot_del_by_host(struct slot *pslot, const char *host) {
-    struct slot *ret = pslot;
-    struct slot *prev_pslot = NULL;
-    while (pslot) {
+void
+slot_del_by_host(struct slot *pslot_list, const char *host) {
+    struct slot *pslot = pslot_list;
+    struct slot *prev_pslot = pslot;
+    while ((pslot = pslot->next) != NULL) {
         if (strcmp(pslot->host, host) == 0) {
-            if (prev_pslot == NULL) {
-                ret = pslot->next;
-            } else {
-                prev_pslot->next = pslot->next;
-            }
+            prev_pslot->next = pslot->next;
             printf("deleted: ");
             printf("%s [", pslot->host);
             print_slot_args(pslot);
@@ -159,7 +156,5 @@ slot_del_by_host(struct slot *pslot, const char *host) {
             slot_free(pslot);
         }
         prev_pslot = pslot;
-        pslot = pslot->next;
     }
-    return ret;
 }

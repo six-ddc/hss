@@ -9,10 +9,10 @@ void
 reap_child_handler(int sig);
 
 int
-exec_remote_cmd(struct slot *pslot, char *cmd);
+exec_remote_cmd(struct slot *pslot_list, char *cmd);
 
 int
-sync_exec_remote_cmd(struct slot *pslot, char *cmd, sstring *out, sstring *err);
+sync_exec_remote_cmd(struct slot *pslot_list, char *cmd, sstring *out, sstring *err);
 
 int
 exec_local_cmd(char *cmd);

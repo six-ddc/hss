@@ -93,6 +93,6 @@ register_config() {
     pcmd->name = "config";
     pcmd->func = inner_command_config;
     pcmd->desc = "configuration manager";
-    pcmd->next = inner_commands;
+    pcmd->next = NULL;
     return pcmd;
 }

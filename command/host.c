@@ -18,19 +18,17 @@ host_list(int argc, const char **argv) {
     int max_len = 0;
     struct slot *pslot = slots;
     int len;
-    while (pslot) {
+    while ((pslot = pslot->next) != NULL) {
         len = (int) strlen(pslot->host);
         max_len = len > max_len ? len : max_len;
-        pslot = pslot->next;
     }
     printf("%-*s exit_code options\n", max_len, "host");
     pslot = slots;
-    while (pslot) {
+    while ((pslot = pslot->next) != NULL) {
         printf("%-*s %-*d \"", max_len, pslot->host,
                (int) strlen("exit_code"), pslot->exit_code);
         print_slot_args(pslot);
         printf("\"\n");
-        pslot = pslot->next;
     }
     return 0;
 }
@@ -44,7 +42,7 @@ host_del(int argc, const char **argv) {
         return -1;
     }
     for (i = 1; i < argc; ++i) {
-        slots = slot_del_by_host(slots, argv[i]);
+        slot_del_by_host(slots, argv[i]);
     }
     return 0;
 }
@@ -63,11 +61,7 @@ host_add(int argc, const char **argv) {
         if (!pslot) {
             continue;
         }
-        if (!slots) {
-            slots = pslot;
-        } else {
-            slot_append(slots, pslot);
-        }
+        slot_append(slots, pslot);
     }
     return 0;
 }
@@ -107,6 +101,6 @@ register_host() {
     pcmd->name = "host";
     pcmd->func = inner_command_host;
     pcmd->desc = "operate host";
-    pcmd->next = inner_commands;
+    pcmd->next = NULL;
     return pcmd;
 }

@@ -117,11 +117,7 @@ add_host(const char *args) {
     if (!pslot) {
         return;
     }
-    if (!slots) {
-        slots = pslot;
-    } else {
-        slot_append(slots, pslot);
-    }
+    slot_append(slots, pslot);
 }
 
 bool
@@ -164,9 +160,12 @@ struct command *inner_commands = NULL;
 
 void
 init_inner_commands() {
-    inner_commands = register_help();
-    inner_commands = register_host();
-    inner_commands = register_config();
+    struct command* phelp = register_help();
+    struct command* phost =register_host();
+    struct command* pconfig =register_config();
+    inner_commands->next = phelp;
+    inner_commands->next->next = phost;
+    inner_commands->next->next->next = pconfig;
 }
 
 void usage(const char *msg) {
@@ -255,7 +254,7 @@ parse_opts(int argc, char **argv) {
     argc -= optind;
     argv += optind;
 
-    if (slots == NULL) {
+    if (slots->next == NULL) {
         eprintf("ssh slots is empty\n");
         running_state = INNER;
     }
@@ -275,6 +274,9 @@ main(int argc, char **argv) {
 
     int ret = 0;
     char *line;
+
+    slots = calloc(1, sizeof(struct slot));
+    inner_commands = calloc(1, sizeof(struct command));
 
     /* Set the default locale values according to environment variables. */
     setlocale(LC_ALL, "");

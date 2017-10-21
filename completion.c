@@ -87,9 +87,8 @@ inner_command_generator(const char *text, int state) {
         len = strlen(text);
     }
 
-    while (pcmd) {
+    while ((pcmd = pcmd->next) != NULL) {
         name = pcmd->name;
-        pcmd = pcmd->next;
         if (strncmp(name, text, len) == 0) {
             return strdup(name);
         }
