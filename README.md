@@ -23,9 +23,9 @@ Options:
   -v, --verbose             be more verbose (i.e. show ssh command)
   -V, --version             show program version
   -h, --help                display this message
-
-For more information, see https://github.com/six-ddc/hss
 ```
+
+* 使用效果图如下：
 
 ![](https://github.com/six-ddc/hss/blob/master/demo.gif?raw=true)
 
@@ -44,7 +44,7 @@ yum install readline-devel
 apt-get install libreadline6-dev
 ```
 
-* 编译
+* 编译&安装
 
 ```bash
 make && make install
@@ -54,4 +54,66 @@ make && make install
 
 ## 指南
 
+hss的实现原理是对每个host，直接调用本地的`ssh`命令去执行服务器操作，然后再通过进程间通信将执行结果返回给终端。
+
+故此hss支持所有的`ssh`命令的参数选项。以下是hostfile示例文件：
+
+```
+192.168.1.1
+-p 2222 root@192.168.1.2
+-p 2222 -i ~/.ssh/identity_file root@192.168.1.3
+-p 2222 -oConnectTimeout=3 root@192.168.1.4
+```
+
+连接上述机器的命令如下：
+
+```
+# 指定配置文件的方式
+hss -f hostfile
+
+# 管道方式，这里必须指定需要执行的命令
+cat hostfile | hss -f - 'date'
+
+# 通过传参的方式
+hss -H '192.168.1.1' -H '-p 2222 root@192.168.1.2' -H '-p 2222 -i ~/.ssh/identity_file root@192.168.1.3' -H '-p 2222 -oConnectTimeout=3 root@192.168.1.4'
+```
+
+hss命令本身也可以携带一些简单的参数，这些参数将作为每一个host的默认值，比如指定了`-t conn-timeout`，那么对于没有配置超时时间的，将用该值作为超时设置。
+
+### inner模式
+
+通过`Esc`可将运行模式从默认的`remote`切换到`inner`，inner模式下支持的命令都是程序内部实现的（可参考[command目录](https://github.com/six-ddc/hss/tree/master/command)），目前支持以下几种：
+
+* help
+
+    列出inner命令列表
+
+* config
+
+    ```
+    Usage: config <command>
+
+    Commands:
+      get all|<config> : get config
+      set <config> [value] : set config
+
+    Config:
+      output <filename> : redirect output to a file. stdout is used if filename is '-'
+      conn-timeout <filename>  : ssh connect timeout
+    ```
+
+    配置管理，可get/set程序运行的一些配置，比如可通过`config set output a.txt`，将后面remote模式下的命令执行结果都重定向输出到a.txt文件中，需要重新输出到终端，则使用`config set output -`复原
+
+* host
+
+    ```
+    Usage: host <command>
+
+    Commands:
+      list : list all ssh slots
+      add <ssh_options> : add a ssh slot
+      del <ssh_host> : delete special ssh slot
+    ```
+
+    host管理，可动态增加或删除需要连接的远程host
 

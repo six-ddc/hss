@@ -4,10 +4,11 @@
 
 static int
 inner_command_help(char *arg) {
+    static int name_width = 10;
     struct command *pcmd = inner_commands;
     printf("Command:\n");
     while ((pcmd = pcmd->next) != NULL) {
-        printf("  %s\t: %s\n", pcmd->name, pcmd->desc);
+        printf("%-*s : %s\n", name_width, pcmd->name, pcmd->desc);
     }
     return 0;
 }

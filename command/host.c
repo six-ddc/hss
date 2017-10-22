@@ -100,7 +100,7 @@ register_host() {
     struct command *pcmd = malloc(sizeof(struct command));
     pcmd->name = "host";
     pcmd->func = inner_command_host;
-    pcmd->desc = "operate host";
+    pcmd->desc = "host manager";
     pcmd->next = NULL;
     return pcmd;
 }
