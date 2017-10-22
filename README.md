@@ -38,10 +38,10 @@ For more information, see https://github.com/six-ddc/hss
 brew install readline
 
 ## on CentOS
-apt-get install libreadline6-dev
+yum install readline-devel
 
 ## on Ubuntu / Debian 
-yum install readline-devel
+apt-get install libreadline6-dev
 ```
 
 * 编译
