@@ -1,6 +1,7 @@
 #include "../common.h"
 #include "../command.h"
 #include "../slot.h"
+#include "host.h"
 
 static void
 print_host_usage() {

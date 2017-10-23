@@ -23,7 +23,11 @@ static void
 print_line(struct slot *pslot, int io_type, sstring buf, void *data) {
     FILE *output = (FILE *) data;
     if (output == stdout) {
-        printf(ANSI_COLOR_GREEN "%s -> " ANSI_COLOR_RESET, pslot->host);
+        if (io_type == STDOUT_FILENO) {
+            printf(ANSI_COLOR_GREEN "[O] %s -> " ANSI_COLOR_RESET, pslot->host);
+        } else {
+            printf(ANSI_COLOR_RED "[E] %s -> " ANSI_COLOR_RESET, pslot->host);
+        }
     }
     fwrite(buf, 1, string_length(buf), output);
     fflush(output);
@@ -40,70 +44,14 @@ save_string(struct slot *pslot, int io_type, sstring buf, void *data) {
     *(sstring *) data = str;
 }
 
-static void
-exec_ssh_cmd(struct slot *pslot, char *cmd) {
-    char timeout_argv[64];
-    char host_argv[256];
-    char *ssh_argv[128];
-    int idx = 0;
-    int i;
-    int ret;
-
-    close(STDIN_FILENO);
-
-    // printf("cmd: %s\n", cmd);
-
-    close(pslot->io.out[PIPE_READ_END]);
-    close(pslot->io.err[PIPE_READ_END]);
-
-    if (dup2(pslot->io.out[PIPE_WRITE_END], STDOUT_FILENO) == -1) {
-        eprintf("failed to dup stdout: %s\n", strerror(errno));
-    }
-    if (dup2(pslot->io.err[PIPE_WRITE_END], STDERR_FILENO) == -1) {
-        eprintf("failed to dup stderr: %s\n", strerror(errno));
-    }
-
-    ssh_argv[idx++] = "-q";
-    ssh_argv[idx++] = "-oNumberOfPasswordPrompts=0";
-    ssh_argv[idx++] = "-oStrictHostKeyChecking=no";
-
-    snprintf(timeout_argv, sizeof timeout_argv, "-oConnectTimeout=%d", pconfig->conn_timeout);
-    ssh_argv[idx++] = timeout_argv;
-
-    if (pconfig->identity_file) {
-        ssh_argv[idx++] = "-i";
-        ssh_argv[idx++] = pconfig->identity_file;
-    }
-
-    for (i = 0; i < pslot->ssh_argc; ++i) {
-        if (i == pslot->ssh_argc - 1 && pconfig->user) {
-            if (!strchr(pslot->ssh_argv[i], '@')) {
-                snprintf(host_argv, sizeof host_argv, "%s@%s", pconfig->user, pslot->ssh_argv[i]);
-                ssh_argv[idx++] = host_argv;
-            } else {
-                ssh_argv[idx++] = pslot->ssh_argv[i];
-            }
-        } else {
-            ssh_argv[idx++] = pslot->ssh_argv[i];
-        }
-    }
-    ssh_argv[idx++] = cmd;
-    ssh_argv[idx++] = NULL;
-
-    ret = execvp("ssh", ssh_argv);
-
-    eprintf("failed to exec the ssh binary: (%d) %s\n", ret, strerror(errno));
-    exit(1);
-}
-
 static struct slot *
-fork_ssh(struct slot *pslot, char *cmd) {
+fork_command(struct slot *pslot, void (*fn)(struct slot *, int, char **), int argc, char **argv) {
     int pid;
     slot_reinit(pslot);
     switch (pid = fork()) {
         case 0:
             // child
-            exec_ssh_cmd(pslot, cmd);
+            fn(pslot, argc, argv);
             break;
         case -1:
             // error
@@ -155,107 +103,13 @@ read_alive_slots(struct slot *pslot, fd_set *readfds, FILE *output) {
 
 static void
 read_dead_slots(struct slot *pslot, struct slot *pslot_end, FILE *output) {
-    while (pslot) {
+    while (pslot && pslot != pslot_end) {
         if (!pslot->alive) {
             slot_read_remains(pslot, STDOUT_FILENO, print_line, output);
             slot_read_remains(pslot, STDERR_FILENO, print_line, output);
         }
         pslot = pslot->next;
     }
-}
-
-int
-exec_remote_cmd(struct slot *pslot_list, char *cmd) {
-    fd_set readfds;
-    struct slot *pslot = pslot_list->next;
-    struct slot *pslot_head = pslot;
-    struct timeval no_timeout;
-    struct timeval *timeout;
-    FILE *output;
-
-    if (!pslot) {
-        return 0;
-    }
-
-    memset(&no_timeout, 0, sizeof(struct timeval));
-
-    if (pconfig->output_file && strcmp(pconfig->output_file, "-") != 0) {
-        output = fopen(pconfig->output_file, "a");
-        if (!output) {
-            eprintf("Can not open file %s (%s)\n", pconfig->output_file, strerror(errno));
-            return -1;
-        }
-    } else {
-        output = stdout;
-    }
-
-    alive_children = 0;
-
-    while (pslot || alive_children) {
-        BLOCK_SIGCHLD;
-        if (pslot) {
-            fork_ssh(pslot, cmd);
-            pslot = pslot->next;
-            usleep(10 * 1000);
-        }
-
-        read_dead_slots(pslot_head, pslot, output);
-
-        FD_ZERO(&readfds);
-        fdset_alive_slots(pslot_head, &readfds);
-
-        if (!pslot) {
-            timeout = NULL;
-        } else {
-            timeout = &no_timeout;
-        }
-
-        if (select(MAXFD, &readfds, NULL, NULL, timeout) > 0) {
-            read_alive_slots(pslot_head, &readfds, output);
-        }
-        UNBLOCK_SIGCHLD;
-    }
-
-    read_dead_slots(pslot_head, pslot, output);
-
-    if (output != stdout) {
-        fclose(output);
-    }
-
-    return 0;
-}
-
-int
-sync_exec_remote_cmd(struct slot *pslot_list, char *cmd, sstring *out, sstring *err) {
-
-    fd_set readfds;
-    struct slot* pslot = pslot_list->next;
-
-    if (!pslot) {
-        return 0;
-    }
-
-    FD_ZERO(&readfds);
-
-    BLOCK_SIGCHLD;
-    fork_ssh(pslot, cmd);
-    FD_SET(pslot->io.out[PIPE_READ_END], &readfds);
-    FD_SET(pslot->io.err[PIPE_READ_END], &readfds);
-    UNBLOCK_SIGCHLD;
-
-    while (alive_children) {
-        BLOCK_SIGCHLD;
-        if (select(MAXFD, &readfds, NULL, NULL, NULL) > 0) {
-            if (FD_ISSET(pslot->io.out[PIPE_READ_END], &readfds)) {
-                slot_read_line(pslot, STDOUT_FILENO, save_string, out);
-            }
-            if (FD_ISSET(pslot->io.err[PIPE_READ_END], &readfds)) {
-                slot_read_line(pslot, STDERR_FILENO, save_string, err);
-            }
-        }
-        UNBLOCK_SIGCHLD;
-    }
-    return 0;
 }
 
 int
@@ -331,3 +185,211 @@ reap_child_handler(int sig) {
 
     RESTORE_ERRNO;
 }
+
+static void
+exec_ssh_cmd(struct slot *pslot, int argc, char **argv) {
+    char timeout_argv[64];
+    char host_argv[256];
+    char *ssh_argv[128];
+    int idx = 0;
+    int i;
+    int ret;
+    char *cmd = argv[0];
+
+    close(STDIN_FILENO);
+
+    // printf("cmd: %s\n", cmd);
+
+    close(pslot->io.out[PIPE_READ_END]);
+    close(pslot->io.err[PIPE_READ_END]);
+
+    if (dup2(pslot->io.out[PIPE_WRITE_END], STDOUT_FILENO) == -1) {
+        eprintf("failed to dup stdout: %s\n", strerror(errno));
+    }
+    if (dup2(pslot->io.err[PIPE_WRITE_END], STDERR_FILENO) == -1) {
+        eprintf("failed to dup stderr: %s\n", strerror(errno));
+    }
+
+    ssh_argv[idx++] = "-q";
+    ssh_argv[idx++] = "-oNumberOfPasswordPrompts=0";
+    ssh_argv[idx++] = "-oStrictHostKeyChecking=no";
+
+    snprintf(timeout_argv, sizeof timeout_argv, "-oConnectTimeout=%d", pconfig->conn_timeout);
+    ssh_argv[idx++] = timeout_argv;
+
+    if (pconfig->identity_file) {
+        ssh_argv[idx++] = "-i";
+        ssh_argv[idx++] = pconfig->identity_file;
+    }
+
+    for (i = 0; i < pslot->ssh_argc; ++i) {
+        if (i == pslot->ssh_argc - 1 && pconfig->user) {
+            if (!strchr(pslot->ssh_argv[i], '@')) {
+                snprintf(host_argv, sizeof host_argv, "%s@%s", pconfig->user, pslot->ssh_argv[i]);
+                ssh_argv[idx++] = host_argv;
+            } else {
+                ssh_argv[idx++] = pslot->ssh_argv[i];
+            }
+        } else {
+            ssh_argv[idx++] = pslot->ssh_argv[i];
+        }
+    }
+    ssh_argv[idx++] = cmd;
+    ssh_argv[idx++] = NULL;
+
+    ret = execvp("ssh", ssh_argv);
+
+    eprintf("failed to exec the ssh binary: (%d) %s\n", ret, strerror(errno));
+    exit(1);
+}
+
+static void
+exec_scp_cmd(struct slot *pslot, int argc, char **argv) {
+    char timeout_argv[64];
+    char host_argv[256];
+    char *ssh_argv[128];
+    int idx = 0;
+    int i;
+    int ret;
+    char* local_filename = argv[0];
+    char* remote_filename = argv[1];
+
+    close(STDIN_FILENO);
+
+    close(pslot->io.out[PIPE_READ_END]);
+    close(pslot->io.err[PIPE_READ_END]);
+
+    if (dup2(pslot->io.out[PIPE_WRITE_END], STDOUT_FILENO) == -1) {
+        eprintf("failed to dup stdout: %s\n", strerror(errno));
+    }
+    if (dup2(pslot->io.err[PIPE_WRITE_END], STDERR_FILENO) == -1) {
+        eprintf("failed to dup stderr: %s\n", strerror(errno));
+    }
+
+    ssh_argv[idx++] = "-oNumberOfPasswordPrompts=0";
+    ssh_argv[idx++] = "-oStrictHostKeyChecking=no";
+
+    snprintf(timeout_argv, sizeof timeout_argv, "-oConnectTimeout=%d", pconfig->conn_timeout);
+    ssh_argv[idx++] = timeout_argv;
+
+    if (pconfig->identity_file) {
+        ssh_argv[idx++] = "-i";
+        ssh_argv[idx++] = pconfig->identity_file;
+    }
+
+    for (i = 0; i < pslot->ssh_argc - 1; ++i) {
+        if (strcmp(pslot->ssh_argv[i], "-p") == 0) {
+            ssh_argv[idx++] = "-P";
+        } else {
+            ssh_argv[idx++] = pslot->ssh_argv[i];
+        }
+    }
+
+    ssh_argv[idx++] = local_filename;
+    if (pconfig->user && !strchr(pslot->ssh_argv[i], '@')) {
+        snprintf(host_argv, sizeof host_argv, "%s@%s:%s", pconfig->user, pslot->ssh_argv[i], remote_filename);
+    } else {
+        snprintf(host_argv, sizeof host_argv, "%s:%s", pslot->ssh_argv[i], remote_filename);
+    }
+    ssh_argv[idx++] = host_argv;
+    ssh_argv[idx++] = NULL;
+
+    ret = execvp("scp", ssh_argv);
+
+    eprintf("failed to exec the scp binary: (%d) %s\n", ret, strerror(errno));
+    exit(1);
+}
+
+static int
+exec_command_foreach(struct slot *pslot_list, void (*fn_fork)(struct slot *, int, char **), int argc, char **argv) {
+    fd_set readfds;
+    struct slot *pslot = pslot_list->next;
+    struct slot *pslot_head = pslot;
+    struct timeval no_timeout;
+    struct timeval *timeout;
+    FILE *output;
+
+    if (!pslot) {
+        return 0;
+    }
+
+    memset(&no_timeout, 0, sizeof(struct timeval));
+
+    output = stdout;
+
+    alive_children = 0;
+
+    while (pslot || alive_children) {
+        BLOCK_SIGCHLD;
+        if (pslot) {
+            fork_command(pslot, fn_fork, argc, argv);
+            pslot = pslot->next;
+            usleep(10 * 1000);
+        }
+
+        read_dead_slots(pslot_head, pslot, output);
+
+        FD_ZERO(&readfds);
+        fdset_alive_slots(pslot_head, &readfds);
+
+        timeout = pslot ? &no_timeout : NULL;
+
+        if (select(MAXFD, &readfds, NULL, NULL, timeout) > 0) {
+            read_alive_slots(pslot_head, &readfds, output);
+        }
+        UNBLOCK_SIGCHLD;
+    }
+
+    read_dead_slots(pslot_head, pslot, output);
+
+    return 0;
+}
+
+int
+exec_remote_cmd(struct slot *pslot_list, char *cmd) {
+    int argc = 1;
+    char *argv[1] = {cmd};
+    return exec_command_foreach(pslot_list, exec_ssh_cmd, argc, argv);
+}
+
+int
+upload_file(struct slot *pslot_list, char *local_filename, char *remote_filename) {
+    int argc = 2;
+    char *argv[2] = {local_filename, remote_filename};
+    return exec_command_foreach(pslot_list, exec_scp_cmd, argc, argv);
+}
+
+int
+sync_exec_remote_cmd(struct slot *pslot_list, char *cmd, sstring *out, sstring *err) {
+
+    fd_set readfds;
+    char *argv[1] = {cmd};
+    struct slot *pslot = pslot_list->next;
+
+    if (!pslot) {
+        return 0;
+    }
+
+    FD_ZERO(&readfds);
+
+    BLOCK_SIGCHLD;
+    fork_command(pslot, exec_ssh_cmd, 1, argv);
+    FD_SET(pslot->io.out[PIPE_READ_END], &readfds);
+    FD_SET(pslot->io.err[PIPE_READ_END], &readfds);
+    UNBLOCK_SIGCHLD;
+
+    while (alive_children) {
+        BLOCK_SIGCHLD;
+        if (select(MAXFD, &readfds, NULL, NULL, NULL) > 0) {
+            if (FD_ISSET(pslot->io.out[PIPE_READ_END], &readfds)) {
+                slot_read_line(pslot, STDOUT_FILENO, save_string, out);
+            }
+            if (FD_ISSET(pslot->io.err[PIPE_READ_END], &readfds)) {
+                slot_read_line(pslot, STDERR_FILENO, save_string, err);
+            }
+        }
+        UNBLOCK_SIGCHLD;
+    }
+    return 0;
+}
+

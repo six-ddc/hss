@@ -12,6 +12,7 @@
 #include "command/help.h"
 #include "command/host.h"
 #include "command/config.h"
+#include "command/upload.h"
 
 const char *HSS_VERSION = "1.0-beta";
 
@@ -163,9 +164,11 @@ init_inner_commands() {
     struct command* phelp = register_help();
     struct command* phost =register_host();
     struct command* pconfig =register_config();
+    struct command* pupload =register_upload();
     inner_commands->next = phelp;
     inner_commands->next->next = phost;
     inner_commands->next->next->next = pconfig;
+    inner_commands->next->next->next->next = pupload;
 }
 
 void usage(const char *msg) {

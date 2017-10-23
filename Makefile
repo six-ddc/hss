@@ -1,6 +1,6 @@
 default: all
 
-CFLAGS=-I/usr/local/opt/readline/include -O3 -Wall
+CFLAGS=-I/usr/local/opt/readline/include -O3 -Wall -g
 LIBS=-lreadline
 
 ifeq ($(shell uname), Darwin)
@@ -35,7 +35,10 @@ command/host.o: command/host.c
 command/config.o: command/config.c
 	$(CC) $(CFLAGS) -c command/config.c -o command/config.o
 
-all: main.o sstring.o slot.o completion.o executor.o command/help.o command/host.o command/config.o
+command/upload.o: command/upload.c
+	$(CC) $(CFLAGS) -c command/upload.c -o command/upload.o
+
+all: main.o sstring.o slot.o completion.o executor.o command/help.o command/host.o command/config.o command/upload.o
 	$(CC) $(CFLAGS) $(LIBS) main.o sstring.o slot.o completion.o executor.o command/*.o -o $(HSS_BIN) $(LDFLAGS)
 
 install:
