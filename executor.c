@@ -241,7 +241,7 @@ exec_ssh_cmd(struct slot *pslot, int argc, char **argv) {
 static void
 exec_scp_cmd(struct slot *pslot, int argc, char **argv) {
     char host_argv[256];
-    char *ssh_argv[128];
+    char *scp_argv[128];
     int idx = 0;
     int i;
     int ret;
@@ -260,35 +260,36 @@ exec_scp_cmd(struct slot *pslot, int argc, char **argv) {
         eprintf("failed to dup stderr: %s\n", strerror(errno));
     }
 
-    ssh_argv[idx++] = "-oNumberOfPasswordPrompts=0";
-    ssh_argv[idx++] = "-oStrictHostKeyChecking=no";
+    scp_argv[idx++] = "-r";
+    scp_argv[idx++] = "-oNumberOfPasswordPrompts=0";
+    scp_argv[idx++] = "-oStrictHostKeyChecking=no";
 
     for (i = 0; i < pconfig->common_options_argc; ++i) {
         if (strcmp(pconfig->common_options_argv[i], "-p") == 0) {
-            ssh_argv[idx++] = "-P";
+            scp_argv[idx++] = "-P";
         } else {
-            ssh_argv[idx++] = (char *) pconfig->common_options_argv[i];
+            scp_argv[idx++] = (char *) pconfig->common_options_argv[i];
         }
     }
 
     for (i = 0; i < pslot->ssh_argc - 1; ++i) {
         if (strcmp(pslot->ssh_argv[i], "-p") == 0) {
-            ssh_argv[idx++] = "-P";
+            scp_argv[idx++] = "-P";
         } else {
-            ssh_argv[idx++] = pslot->ssh_argv[i];
+            scp_argv[idx++] = pslot->ssh_argv[i];
         }
     }
 
-    ssh_argv[idx++] = local_filename;
+    scp_argv[idx++] = local_filename;
     if (pconfig->user && !strchr(pslot->ssh_argv[i], '@')) {
         snprintf(host_argv, sizeof host_argv, "%s@%s:%s", pconfig->user, pslot->ssh_argv[i], remote_filename);
     } else {
         snprintf(host_argv, sizeof host_argv, "%s:%s", pslot->ssh_argv[i], remote_filename);
     }
-    ssh_argv[idx++] = host_argv;
-    ssh_argv[idx++] = NULL;
+    scp_argv[idx++] = host_argv;
+    scp_argv[idx++] = NULL;
 
-    ret = execvp("scp", ssh_argv);
+    ret = execvp("scp", scp_argv);
 
     eprintf("failed to exec the scp binary: (%d) %s\n", ret, strerror(errno));
     exit(1);
