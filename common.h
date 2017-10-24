@@ -52,11 +52,11 @@ extern struct slot *slots;
 extern struct command *inner_commands;
 
 extern struct hss_config {
-    int conn_timeout;
     bool verbose;
-    char* identity_file;
-    char* user;
-    char* output_file;
+    char *user;
+    int common_options_argc;
+    const char **common_options_argv;
+    char *output_file;
 } *pconfig;
 
 #endif //_HSS_COMMON_H_

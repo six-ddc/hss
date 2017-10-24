@@ -100,6 +100,7 @@ inner_command_generator(const char *text, int state) {
 char **
 inner_completion_func(const char *text, int start, int end) {
     char **matches = NULL;
+    //printf("\n[%s], [%s], %d, %d\n", text, rl_line_buffer, start, end);
 
     if (start == 0) {
         matches = rl_completion_matches(text, inner_command_generator);

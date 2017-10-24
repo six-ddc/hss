@@ -13,30 +13,56 @@ print_config_usage() {
             "\n"
             "Config:\n"
             "  output <filename>         : redirect output to a file. stdout is used if filename is '-'\n"
-            "  conn-timeout <filename>   : ssh connect timeout\n"
+            "  common-options <filename> : common ssh options\n"
     );
+}
+
+static sstring
+get_common_options() {
+    sstring args = new_emptystring();
+    int i = 0;
+    for (i = 0; i < pconfig->common_options_argc; ++i) {
+        args = string_append(args, pconfig->common_options_argv[i], strlen(pconfig->common_options_argv[i]));
+        if (i != pconfig->common_options_argc - 1) {
+            args = string_append_char(args, ' ');
+        }
+    }
+    return args;
 }
 
 static int
 config_get(int argc, const char **argv) {
     static int name_width = 15;
+    sstring args = NULL;
     if (argc == 1 || strcmp(argv[1], "all") == 0) {
-        printf("%-*s %s\n", name_width, "output", pconfig->output_file ? pconfig->output_file : "-");
-        printf("%-*s %d\n", name_width, "conn-timeout", pconfig->conn_timeout);
+        if (pconfig->output_file) {
+            printf("%-*s \"%s\"\n", name_width, "output", pconfig->output_file);
+        } else {
+            printf("%-*s -\n", name_width, "output");
+        }
+        args = get_common_options();
+        printf("%-*s \"%s\"\n", name_width, "common-options", args);
     } else {
         if (strcmp(argv[1], "output") == 0) {
-            printf("%-*s %s\n", name_width, "output", pconfig->output_file ? pconfig->output_file : "-");
-        } else if (strcmp(argv[1], "conn-timeout") == 0) {
-            printf("%-*s %d\n", name_width, "conn-timeout", pconfig->conn_timeout);
+            if (pconfig->output_file) {
+                printf("%-*s \"%s\"\n", name_width, "output", pconfig->output_file);
+            } else {
+                printf("%-*s -\n", name_width, "output");
+            }
+        } else if (strcmp(argv[1], "common-options") == 0) {
+            args = get_common_options();
+            printf("%-*s \"%s\"\n", name_width, "common-options", args);
         } else {
             eprintf("invalid config \"%s\"\n", argv[1]);
         }
     }
+    string_free(args);
     return 0;
 }
 
 static int
 config_set(int argc, const char **argv) {
+    int ret;
     if (argc < 2) {
         printf("\"config set\" requires at least 1 argument\n\n");
         print_config_usage();
@@ -44,22 +70,31 @@ config_set(int argc, const char **argv) {
     }
     if (strcmp(argv[1], "output") == 0) {
         if (argc < 3) {
-            goto err;
+            printf("\"config set %s\" requires at least 1 argument\n\n", argv[1]);
+            print_config_usage();
+            return 1;
         }
         if (pconfig->output_file) {
             string_free(pconfig->output_file);
         }
         pconfig->output_file = new_string(argv[2]);
-    } else if (strcmp(argv[1], "conn-timeout") == 0) {
-        pconfig->conn_timeout = (int) strtol(argv[2], NULL, 10);
+    } else if (strcmp(argv[1], "common-options") == 0) {
+        if (argc < 3) {
+            pconfig->common_options_argc = 0;
+            free(pconfig->common_options_argv);
+            pconfig->common_options_argv = NULL;
+        } else {
+            ret = parse_argv_string(argv[2], &pconfig->common_options_argc, &pconfig->common_options_argv);
+            if (ret != 0) {
+                eprintf("unable parse options \"%s\"\n", argv[2]);
+                return 1;
+            }
+        }
     } else {
         eprintf("invalid config \"%s\"\n", argv[1]);
+        return 1;
     }
     return 0;
-    err:
-    printf("\"config set %s\" requires at least 1 argument\n\n", argv[1]);
-    print_config_usage();
-    return 1;
 }
 
 static int

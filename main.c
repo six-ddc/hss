@@ -27,8 +27,6 @@ const char *host_file = NULL;
 
 struct hss_config *pconfig = NULL;
 
-int default_conn_timeout = 30;
-
 enum state {
     REMOTE,
     INNER,
@@ -180,16 +178,15 @@ void usage(const char *msg) {
                 "Options:\n"
                 "  -f, --file=FILE           file with the list of hosts or - for stdin\n"
                 "  -H, --host                specifies a host option, support the same options as the ssh command\n"
-                "  -i, --identity-file=FILE  specifies a default identity (private key) authentication file\n"
+                "  -c, --common              specify the common ssh options\n"
                 "  -u, --user                the default user name to use when connecting to the remote server\n"
-                "  -t, --conn-timeout        ssh connect timeout (default %d sec)\n"
                 "  -o, --output=FILE         write remote command output to a file\n"
                 "  -v, --verbose             be more verbose (i.e. show ssh command)\n"
                 "  -V, --version             show program version\n"
                 "  -h, --help                display this message\n"
                 "\n"
                 "For more information, see https://github.com/six-ddc/hss"
-                "\n", default_conn_timeout
+                "\n"
                );
         exit(0);
     } else {
@@ -206,24 +203,23 @@ void print_version() {
 
 void
 parse_opts(int argc, char **argv) {
+    int ret;
     int opt;
 
     static struct option long_opts[] = {
             {"help",          no_argument,       NULL, 'h'},
             {"file",          required_argument, NULL, 'f'},
             {"host",          required_argument, NULL, 'H'},
-            {"identity-file", required_argument, NULL, 'i'},
+            {"common",        required_argument, NULL, 'c'},
             {"user",          required_argument, NULL, 'u'},
-            {"conn-timeout",  required_argument, NULL, 't'},
             {"output",        required_argument, NULL, 'o'},
             {"verbose",       no_argument,       NULL, 'v'},
             {"version",       no_argument,       NULL, 'V'},
             {NULL,            0,                 NULL, 0}
     };
-    const char *short_opts = "hf:H:i:u:t:o:Vv";
+    const char *short_opts = "hf:H:c:u:o:vV";
 
     pconfig = calloc(1, sizeof(struct hss_config));
-    pconfig->conn_timeout = default_conn_timeout;
 
     while ((opt = getopt_long(argc, argv, short_opts, long_opts, NULL)) != -1) {
         switch (opt) {
@@ -236,14 +232,15 @@ parse_opts(int argc, char **argv) {
             case 'H':
                 add_host(optarg);
                 break;
-            case 'i':
-                pconfig->identity_file = optarg;
+            case 'c':
+                ret = parse_argv_string(optarg, &pconfig->common_options_argc, &pconfig->common_options_argv);
+                if (ret != 0) {
+                    eprintf("unable parse options \"%s\"\n", optarg);
+                    exit(1);
+                }
                 break;
             case 'u':
                 pconfig->user = optarg;
-                break;
-            case 't':
-                pconfig->conn_timeout = (int) strtol(optarg, NULL, 10);
                 break;
             case 'o':
                 pconfig->output_file = new_string(optarg);

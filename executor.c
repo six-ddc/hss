@@ -149,7 +149,7 @@ exec_inner_cmd(char *line) {
 
     cmd = find_inner_command(word);
     if (!cmd) {
-        printf("%s: No such command\n", word);
+        printf("%s: no such command\n", word);
         return -1;
     }
 
@@ -188,7 +188,6 @@ reap_child_handler(int sig) {
 
 static void
 exec_ssh_cmd(struct slot *pslot, int argc, char **argv) {
-    char timeout_argv[64];
     char host_argv[256];
     char *ssh_argv[128];
     int idx = 0;
@@ -214,12 +213,8 @@ exec_ssh_cmd(struct slot *pslot, int argc, char **argv) {
     ssh_argv[idx++] = "-oNumberOfPasswordPrompts=0";
     ssh_argv[idx++] = "-oStrictHostKeyChecking=no";
 
-    snprintf(timeout_argv, sizeof timeout_argv, "-oConnectTimeout=%d", pconfig->conn_timeout);
-    ssh_argv[idx++] = timeout_argv;
-
-    if (pconfig->identity_file) {
-        ssh_argv[idx++] = "-i";
-        ssh_argv[idx++] = pconfig->identity_file;
+    for (i = 0; i < pconfig->common_options_argc; ++i) {
+        ssh_argv[idx++] = (char *) pconfig->common_options_argv[i];
     }
 
     for (i = 0; i < pslot->ssh_argc; ++i) {
@@ -245,14 +240,13 @@ exec_ssh_cmd(struct slot *pslot, int argc, char **argv) {
 
 static void
 exec_scp_cmd(struct slot *pslot, int argc, char **argv) {
-    char timeout_argv[64];
     char host_argv[256];
     char *ssh_argv[128];
     int idx = 0;
     int i;
     int ret;
-    char* local_filename = argv[0];
-    char* remote_filename = argv[1];
+    char *local_filename = argv[0];
+    char *remote_filename = argv[1];
 
     close(STDIN_FILENO);
 
@@ -269,12 +263,12 @@ exec_scp_cmd(struct slot *pslot, int argc, char **argv) {
     ssh_argv[idx++] = "-oNumberOfPasswordPrompts=0";
     ssh_argv[idx++] = "-oStrictHostKeyChecking=no";
 
-    snprintf(timeout_argv, sizeof timeout_argv, "-oConnectTimeout=%d", pconfig->conn_timeout);
-    ssh_argv[idx++] = timeout_argv;
-
-    if (pconfig->identity_file) {
-        ssh_argv[idx++] = "-i";
-        ssh_argv[idx++] = pconfig->identity_file;
+    for (i = 0; i < pconfig->common_options_argc; ++i) {
+        if (strcmp(pconfig->common_options_argv[i], "-p") == 0) {
+            ssh_argv[idx++] = "-P";
+        } else {
+            ssh_argv[idx++] = (char *) pconfig->common_options_argv[i];
+        }
     }
 
     for (i = 0; i < pslot->ssh_argc - 1; ++i) {
