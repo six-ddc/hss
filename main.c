@@ -13,8 +13,9 @@
 #include "command/host.h"
 #include "command/config.h"
 #include "command/upload.h"
+#include "command/download.h"
 
-const char *HSS_VERSION = "1.0-beta";
+const char *HSS_VERSION = "1.1";
 
 char history_file[512];
 
@@ -22,8 +23,6 @@ volatile bool sigint_interrupt_enabled = false;
 sigjmp_buf sigint_interrupt_jmp;
 
 struct slot *slots = NULL;
-
-const char *host_file = NULL;
 
 struct hss_config *pconfig = NULL;
 
@@ -163,10 +162,8 @@ init_inner_commands() {
     struct command* phost =register_host();
     struct command* pconfig =register_config();
     struct command* pupload =register_upload();
-    inner_commands->next = phelp;
-    inner_commands->next->next = phost;
-    inner_commands->next->next->next = pconfig;
-    inner_commands->next->next->next->next = pupload;
+    struct command* pdownload =register_download();
+    ((((inner_commands->next = phelp)->next = phost)->next = pconfig)->next = pupload)->next = pdownload;
 }
 
 void usage(const char *msg) {
@@ -178,10 +175,10 @@ void usage(const char *msg) {
                 "Options:\n"
                 "  -f, --file=FILE           file with the list of hosts or - for stdin\n"
                 "  -H, --host                specifies a host option, support the same options as the ssh command\n"
-                "  -c, --common              specify the common ssh options\n"
+                "  -c, --common              specify the common ssh options (i.e. '-p 22 -i identity_file')\n"
                 "  -u, --user                the default user name to use when connecting to the remote server\n"
                 "  -o, --output=FILE         write remote command output to a file\n"
-                "  -v, --verbose             be more verbose (i.e. show ssh command)\n"
+                "  -v, --verbose             be more verbose\n"
                 "  -V, --version             show program version\n"
                 "  -h, --help                display this message\n"
                 "\n"

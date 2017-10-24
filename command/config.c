@@ -69,15 +69,10 @@ config_set(int argc, const char **argv) {
         return -1;
     }
     if (strcmp(argv[1], "output") == 0) {
-        if (argc < 3) {
-            printf("\"config set %s\" requires at least 1 argument\n\n", argv[1]);
-            print_config_usage();
-            return 1;
-        }
         if (pconfig->output_file) {
             string_free(pconfig->output_file);
         }
-        pconfig->output_file = new_string(argv[2]);
+        pconfig->output_file = argc < 3 ? NULL : new_string(argv[2]);
     } else if (strcmp(argv[1], "common-options") == 0) {
         if (argc < 3) {
             pconfig->common_options_argc = 0;

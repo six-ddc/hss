@@ -18,11 +18,10 @@ Usage: hss [-f hostfile] [-o file] [-u username] [command]
 Options:
   -f, --file=FILE           file with the list of hosts or - for stdin
   -H, --host                specifies a host option, support the same options as the ssh command
-  -i, --identity-file=FILE  specifies a default identity (private key) authentication file
+  -c, --common              specify the common ssh options (i.e. '-p 22 -i identity_file')
   -u, --user                the default user name to use when connecting to the remote server
-  -t, --conn-timeout        ssh connect timeout (default 30 sec)
   -o, --output=FILE         write remote command output to a file
-  -v, --verbose             be more verbose (i.e. show ssh command)
+  -v, --verbose             be more verbose
   -V, --version             show program version
   -h, --help                display this message
 ```
@@ -80,7 +79,7 @@ cat hostfile | hss -f - 'date'
 hss -H '192.168.1.1' -H '-p 2222 root@192.168.1.2' -H '-p 2222 -i ~/.ssh/identity_file root@192.168.1.3' -H '-p 2222 -oConnectTimeout=3 root@192.168.1.4'
 ```
 
-hss命令本身也可以携带一些简单的参数，这些参数将作为每一个host的默认值，比如指定了`-t conn-timeout`，那么对于没有配置超时时间的，将用该值作为超时设置。
+hss命令本身也支持透传参数到ssh命令，，比如指定了`-c '-oConnectTimeout=3'`，那么对于没有配置超时时间的，将用该值作为超时设置。
 
 ### inner模式
 
@@ -98,21 +97,30 @@ hss命令本身也可以携带一些简单的参数，这些参数将作为每�
 
     将本地文件上传到各个服务器对应路径
 
+* download
+
+    ```
+    Usage: download <remote_path> <local_path>
+    ```
+
+    将各个服务器指定路径的文件下载到本地（最终每个下载的本地文件都将追加host后缀以作区分）
+
 * config
 
     ```
     Usage: config <command>
 
     Commands:
-      get all|<config> : get config
-      set <config> [value] : set config
+      get    all|<config>       : get config
+      set    <config> [value]   : set config
 
     Config:
-      output <filename> : redirect output to a file. stdout is used if filename is '-'
-      conn-timeout <filename>  : ssh connect timeout
+      output <filename>         : redirect output to a file. stdout is used if filename is '-'
+      common-options <filename> : common ssh options
+
     ```
 
-    配置管理，可get/set程序运行的一些配置，比如可通过`config set output a.txt`，将后面remote模式下的命令执行结果都重定向输出到a.txt文件中，需要重新输出到终端，则使用`config set output -`复原
+    配置管理，可get/set程序运行的一些配置，比如可通过`config set output a.txt`，将后面remote模式下的命令执行结果都重定向输出到a.txt文件中，需要重新输出到终端，则使用`config set output`复原
 
 * host
 
@@ -120,9 +128,9 @@ hss命令本身也可以携带一些简单的参数，这些参数将作为每�
     Usage: host <command>
 
     Commands:
-      list : list all ssh slots
-      add <ssh_options> : add a ssh slot
-      del <ssh_host> : delete special ssh slot
+      list               : list all ssh slots
+      add <ssh_options>  : add a ssh slot
+      del <ssh_host>     : delete special ssh slot
     ```
 
     host管理，可动态增加或删除需要连接的远程host

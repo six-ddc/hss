@@ -17,6 +17,9 @@
 sigset_t sigmask;
 sigset_t osigmask;
 
+#define UPLOAD "0"
+#define DOWNLOAD "1"
+
 volatile int alive_children = 0;
 
 static void
@@ -241,12 +244,20 @@ exec_ssh_cmd(struct slot *pslot, int argc, char **argv) {
 static void
 exec_scp_cmd(struct slot *pslot, int argc, char **argv) {
     char host_argv[256];
+    char local_argv[256];
     char *scp_argv[128];
     int idx = 0;
     int i;
     int ret;
-    char *local_filename = argv[0];
-    char *remote_filename = argv[1];
+    char *mode = argv[0];
+    char *local_filename, *remote_filename;
+    if (strcmp(mode, UPLOAD) == 0) {
+        local_filename = argv[1];
+        remote_filename = argv[2];
+    } else {
+        local_filename = argv[2];
+        remote_filename = argv[1];
+    }
 
     close(STDIN_FILENO);
 
@@ -280,13 +291,19 @@ exec_scp_cmd(struct slot *pslot, int argc, char **argv) {
         }
     }
 
-    scp_argv[idx++] = local_filename;
     if (pconfig->user && !strchr(pslot->ssh_argv[i], '@')) {
         snprintf(host_argv, sizeof host_argv, "%s@%s:%s", pconfig->user, pslot->ssh_argv[i], remote_filename);
     } else {
         snprintf(host_argv, sizeof host_argv, "%s:%s", pslot->ssh_argv[i], remote_filename);
     }
-    scp_argv[idx++] = host_argv;
+    if (strcmp(mode, UPLOAD) == 0) {
+        scp_argv[idx++] = local_filename;
+        scp_argv[idx++] = host_argv;
+    } else {
+        scp_argv[idx++] = host_argv;
+        snprintf(local_argv, sizeof local_argv, "%s-%s", local_filename, pslot->ssh_argv[i]);
+        scp_argv[idx++] = local_argv;
+    }
     scp_argv[idx++] = NULL;
 
     ret = execvp("scp", scp_argv);
@@ -342,15 +359,22 @@ exec_command_foreach(struct slot *pslot_list, void (*fn_fork)(struct slot *, int
 
 int
 exec_remote_cmd(struct slot *pslot_list, char *cmd) {
-    int argc = 1;
-    char *argv[1] = {cmd};
+    const int argc = 1;
+    char *argv[] = {cmd};
     return exec_command_foreach(pslot_list, exec_ssh_cmd, argc, argv);
 }
 
 int
 upload_file(struct slot *pslot_list, char *local_filename, char *remote_filename) {
-    int argc = 2;
-    char *argv[2] = {local_filename, remote_filename};
+    const int argc = 3;
+    char *argv[] = {UPLOAD, local_filename, remote_filename};
+    return exec_command_foreach(pslot_list, exec_scp_cmd, argc, argv);
+}
+
+int
+download_file(struct slot *pslot_list, char *remote_filename, char *local_filename) {
+    const int argc = 3;
+    char *argv[] = {DOWNLOAD, remote_filename, local_filename};
     return exec_command_foreach(pslot_list, exec_scp_cmd, argc, argv);
 }
 

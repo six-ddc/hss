@@ -38,7 +38,10 @@ command/config.o: command/config.c
 command/upload.o: command/upload.c
 	$(CC) $(CFLAGS) -c command/upload.c -o command/upload.o
 
-all: main.o sstring.o slot.o completion.o executor.o command/help.o command/host.o command/config.o command/upload.o
+command/download.o: command/download.c
+	$(CC) $(CFLAGS) -c command/download.c -o command/download.o
+
+all: main.o sstring.o slot.o completion.o executor.o command/help.o command/host.o command/config.o command/upload.o command/download.o
 	$(CC) $(CFLAGS) $(LIBS) main.o sstring.o slot.o completion.o executor.o command/*.o -o $(HSS_BIN) $(LDFLAGS)
 
 install:
