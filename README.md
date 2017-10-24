@@ -21,6 +21,7 @@ Options:
   -c, --common              specify the common ssh options (i.e. '-p 22 -i identity_file')
   -u, --user                the default user name to use when connecting to the remote server
   -o, --output=FILE         write remote command output to a file
+  -l, --local               enable local running mode
   -v, --verbose             be more verbose
   -V, --version             show program version
   -h, --help                display this message

@@ -26,6 +26,8 @@ struct slot *slots = NULL;
 
 struct hss_config *pconfig = NULL;
 
+bool enable_local = false;
+
 enum state {
     REMOTE,
     INNER,
@@ -82,7 +84,11 @@ update_completion_function() {
 
 static int
 key_esc_handler(int count, int key) {
-    running_state = (running_state + 1) % LOCAL;
+    if (enable_local) {
+        running_state = (running_state + 1) % (LOCAL + 1);
+    } else {
+        running_state = (running_state + 1) % (INNER + 1);
+    }
     update_completion_function();
 
     rl_on_new_line_with_prompt();
@@ -178,6 +184,7 @@ void usage(const char *msg) {
                 "  -c, --common              specify the common ssh options (i.e. '-p 22 -i identity_file')\n"
                 "  -u, --user                the default user name to use when connecting to the remote server\n"
                 "  -o, --output=FILE         write remote command output to a file\n"
+                "  -l, --local               enable local running mode\n"
                 "  -v, --verbose             be more verbose\n"
                 "  -V, --version             show program version\n"
                 "  -h, --help                display this message\n"
@@ -210,11 +217,12 @@ parse_opts(int argc, char **argv) {
             {"common",        required_argument, NULL, 'c'},
             {"user",          required_argument, NULL, 'u'},
             {"output",        required_argument, NULL, 'o'},
+            {"local",         no_argument,       NULL, 'l'},
             {"verbose",       no_argument,       NULL, 'v'},
             {"version",       no_argument,       NULL, 'V'},
             {NULL,            0,                 NULL, 0}
     };
-    const char *short_opts = "hf:H:c:u:o:vV";
+    const char *short_opts = "hf:H:c:u:o:lvV";
 
     pconfig = calloc(1, sizeof(struct hss_config));
 
@@ -241,6 +249,9 @@ parse_opts(int argc, char **argv) {
                 break;
             case 'o':
                 pconfig->output_file = new_string(optarg);
+                break;
+            case 'l':
+                enable_local = true;
                 break;
             case 'v':
                 pconfig->verbose = true;
