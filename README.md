@@ -159,3 +159,9 @@ C-w       Kill the word behind point, using white space as a word boundary.
 
 C-r       Search backward starting at the current line and moving up through the history as necessary.
 ```
+
+## 下版本方向
+
+* [ ] inner多层级命令补全
+* [ ] upload/download文件路径补全
+* [ ] 解决链接目录补全显示@结尾的问题
