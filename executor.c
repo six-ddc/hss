@@ -327,7 +327,15 @@ exec_command_foreach(struct slot *pslot_list, void (*fn_fork)(struct slot *, int
 
     memset(&no_timeout, 0, sizeof(struct timeval));
 
-    output = stdout;
+    if (pconfig->output_file) {
+        output = fopen(pconfig->output_file, "a");
+        if (!output) {
+            eprintf("can not open file %s (%s)\n", pconfig->output_file, strerror(errno));
+            return -1;
+        }
+    } else {
+        output = stdout;
+    }
 
     alive_children = 0;
 
@@ -353,6 +361,10 @@ exec_command_foreach(struct slot *pslot_list, void (*fn_fork)(struct slot *, int
     }
 
     read_dead_slots(pslot_head, pslot, output);
+
+    if (output != stdout) {
+        fclose(output);
+    }
 
     return 0;
 }

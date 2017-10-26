@@ -72,7 +72,11 @@ config_set(int argc, const char **argv) {
         if (pconfig->output_file) {
             string_free(pconfig->output_file);
         }
-        pconfig->output_file = argc < 3 ? NULL : new_string(argv[2]);
+        if (argc < 3 || strcmp(argv[2], "-") == 0) {
+            pconfig->output_file = NULL;
+        } else {
+            pconfig->output_file = new_string(argv[2]);
+        }
     } else if (strcmp(argv[1], "common-options") == 0) {
         if (argc < 3) {
             pconfig->common_options_argc = 0;
