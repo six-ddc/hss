@@ -301,7 +301,7 @@ exec_scp_cmd(struct slot *pslot, int argc, char **argv) {
         scp_argv[idx++] = host_argv;
     } else {
         scp_argv[idx++] = host_argv;
-        snprintf(local_argv, sizeof local_argv, "%s-%s", local_filename, pslot->ssh_argv[i]);
+        snprintf(local_argv, sizeof local_argv, "%s-%s", pslot->ssh_argv[i], local_filename);
         scp_argv[idx++] = local_argv;
     }
     scp_argv[idx++] = NULL;
