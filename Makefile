@@ -1,6 +1,6 @@
 default: all
 
-CFLAGS=-I/usr/local/opt/readline/include -O3 -Wall -g
+CFLAGS=-I/usr/local/opt/readline/include -O3 -Wall
 LIBS=-lreadline
 
 ifeq ($(shell uname), Darwin)
