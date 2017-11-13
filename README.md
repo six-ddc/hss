@@ -4,13 +4,28 @@
 [![Build Status](https://travis-ci.org/six-ddc/hss.svg?branch=master)](https://travis-ci.org/six-ddc/hss)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](https://opensource.org/licenses/MIT)
 
-## 概述
+[简体中文README](README-zh.md)
 
-hss是一款可交互式的ssh批量执行命令的客户端，交互输入模式基于[libreadline](https://cnswww.cns.cwru.edu/php/chet/readline/rltop.html)实现，使你能像操作bash一样地输入需要执行的命令，同时也支持命令搜索，历史命令纪录等。并且工具支持在输入命令时，按一下`tab`键，即可根据远程服务器的信息，进行文件路径和执行命令补全。另外命令的执行是异步的，无需等待一台机器命令执行完成才执行下一台的ssh操作，可支持同时操作数百台服务器。
+## What's hss?
 
-hss还支持插件扩展，可通过`Esc`键将运行模式从`remote`切换到`inner`，在这里可处理一些批量操作：批量上传下载文件、动态增加删除机器、设置程序运行时的配置等，更多的有趣的功能可能将在后续版本逐渐添加。
+`hss` is an interactive ssh client for multiple servers. It will provide almost the same experience as in the bash environment. It supports:
 
-## 预览
+* interactive input: based on [libreadline](https://cnswww.cns.cwru.edu/php/chet/readline/rltop.html).
+* history: responding to the `C-r` key.
+* auto-completion: completion from remote server on the `tab` key, for commands and paths.
+
+Command is executed on all servers in parallel. Execution on one server does not need to wait for that on another server to finish before starting. So we can run a command on hundreds of servers at the same time.
+
+`hss` can be switched between the `remote` mode and the `inner` mode when the `Esc` key is typed. In the `inner` mode, we can
+
+* add or remove a server dynamically.
+* download or upload files.
+* reconfigure the environments.
+* and do something more in the future versions.
+
+Features in `inner` mode are extensible, and you are welcome to add more features to it.
+
+## A quick start
 
 ```
 Usage: hss [-f hostfile] [-o file] [-u username] [command]
@@ -27,13 +42,13 @@ Options:
   -h, --help                display this message
 ```
 
-* 使用效果图如下：
+* This is a screenshot
 
 ![](https://github.com/six-ddc/hss/blob/master/demo.gif?raw=true)
 
-## 安装
+## How to install it?
 
-* 安装依赖
+* Install dependency
 
 ```bash
 ## on MacOS
@@ -46,19 +61,17 @@ yum install readline-devel
 apt-get install libreadline6-dev
 ```
 
-* 编译&安装
+* Compile and install
 
 ```bash
 make && make install
 ```
 
-* 或者直接下载[Release文件](https://github.com/six-ddc/hss/releases)
+* Or you can download the binary release [here](https://github.com/six-ddc/hss/releases) .
 
-## 指南
+## How to use it?
 
-hss的实现原理是对每个host，直接调用本地的`ssh`命令去执行服务器操作，然后再通过进程间通信将执行结果返回给终端。
-
-故此hss支持所有的`ssh`命令的参数选项。以下是hostfile示例文件：
+The fundamental of `hss` is to execute the `ssh` command for every `host`, and then show the results on the terminal. So `hss` supports every argument supported by the `ssh` command. Following is an example of the `hostfile`:
 
 ```
 192.168.1.1
@@ -67,46 +80,46 @@ hss的实现原理是对每个host，直接调用本地的`ssh`命令去执行�
 -p 2222 -oConnectTimeout=3 root@192.168.1.4
 ```
 
-连接上述机器的命令如下：
+Connect to servers:
 
 ```
-# 指定配置文件的方式
+# Specify the hostfile directly
 hss -f hostfile
 
-# 管道方式，这里必须指定需要执行的命令
+# Or in pipe style (we should specify the command to execute here)
 cat hostfile | hss -f - 'date'
 
-# 通过传参的方式
+# Or pass servers in arguments
 hss -H '192.168.1.1' -H '-p 2222 root@192.168.1.2' -H '-p 2222 -i ~/.ssh/identity_file root@192.168.1.3' -H '-p 2222 -oConnectTimeout=3 root@192.168.1.4'
 ```
 
-hss命令本身也支持透传参数到ssh命令，，比如指定了`-c '-oConnectTimeout=3'`，那么对于没有配置超时时间的，将用该值作为超时设置。
+Passthrough of `ssh` arguments are supported. For example, by specify `-c '-oConnectTimeout=3'`, sessions without a timeout configured will set its timeout on this argument.
 
-### inner模式
+### Inner mode
 
-通过`Esc`可将运行模式从默认的`remote`切换到`inner`，inner模式下支持的命令都是程序内部实现的（可参考[command目录](https://github.com/six-ddc/hss/tree/master/command)），目前支持以下几种：
+`hss` will be switched between the `remote` mode and the `inner` mode when the `Esc` key is typed. The commands for inner mode are provided in the [command directory](https://github.com/six-ddc/hss/tree/master/command). Following is a list of commands for inner mode currently:
 
-* help
+* `help`
 
-    列出inner命令列表
+    To list all inner mode commands
 
-* upload
+* `upload`
 
     ```
     Usage: upload <local_path> <remote_path>
     ```
 
-    将本地文件上传到各个服务器对应路径
+    To upload local file to the specified path of all servers.
 
-* download
+* `download`
 
     ```
     Usage: download <remote_path> <local_path>
     ```
 
-    将各个服务器指定路径的文件下载到本地（最终每个下载的本地文件都将追加host后缀以作区分）
+    To download the specified file to local (The downloaded files are renamed with a host suffix from where the file is downloaded)
 
-* config
+* `config`
 
     ```
     Usage: config <command>
@@ -121,9 +134,9 @@ hss命令本身也支持透传参数到ssh命令，，比如指定了`-c '-oConn
 
     ```
 
-    配置管理，可get/set程序运行的一些配置，比如可通过`config set output a.txt`，将后面remote模式下的命令执行结果都重定向输出到a.txt文件中，需要重新输出到终端，则使用`config set output`复原
+    We can manage the configurations with get/set operations. For example, we can redirect the output to a file `a.txt` by executing command `config set output a.txt`, and recover (output to terminal) by executing command `config set output -`
 
-* host
+* `host`
 
     ```
     Usage: host <command>
@@ -134,18 +147,18 @@ hss命令本身也支持透传参数到ssh命令，，比如指定了`-c '-oConn
       del <ssh_host>     : delete special ssh slot
     ```
 
-    host管理，可动态增加或删除需要连接的远程host
+    To manage hosts - dynamically adding or removing a server.
 
-### readline使用
+### Usage of readline
 
-可交互式的命令输入，基于`libreadline`实现，支持远程命令补全，远程文件路径补全，历史命令保存，历史命令搜索，快捷移动等
+The interactive input is implemented on `libreadline`, supporting command and path completion from remote, history storage and searching, moving around, etc.
 
-* 输入的历史命令保存在`~/.hss_history`文件中
-* 远程命令和文件路径补全，数据信息来自于第一个host连接
-* 进行文件路径补全时，需要当前单词的首字符是`/`, `~`, `.`才可提示补全
-* 对于是符号链接的目录，路径补全时会提示以`@`结尾，目前还没找到好的解决办法
+* Command history is stored in file `~/.hss_history`.
+* Completion of commands and paths are based on the first server in the list.
+* Path completion is available when the first input character is `/`, `~` or `.`.
+* The path completion will end with an `@` character for directory symbol-links. (We haven't found any solution to solve it yet)
 
-以下列举一些简单的快捷命令（更多命令参考[readline说明](http://cnswww.cns.cwru.edu/php/chet/readline/readline.html#SEC1)）
+Following is a list of quick commands (please refer to [readline](http://cnswww.cns.cwru.edu/php/chet/readline/readline.html#SEC1) for more)
 
 ```
 C-a       Move to the start of the line.
@@ -160,8 +173,9 @@ C-w       Kill the word behind point, using white space as a word boundary.
 C-r       Search backward starting at the current line and moving up through the history as necessary.
 ```
 
-## 下版本方向
+## Goals of the future versions
 
-* [ ] inner多层级命令补全
-* [ ] upload/download文件路径补全
-* [ ] 解决链接目录补全显示@结尾的问题
+* [ ] Completion for multi-level subcommands in the inner mode
+* [ ] Path completion on uploading/downloading files.
+* [ ] Solve the "@" suffix problem on directory symbol-link.
+
