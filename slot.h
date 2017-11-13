@@ -25,6 +25,8 @@ slot {
     int pid;
     int exit_code;
     bool alive;
+    int poll_index;
+    FILE* output;
 
     sstring out_buff;
     sstring err_buff;

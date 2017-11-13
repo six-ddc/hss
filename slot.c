@@ -106,6 +106,8 @@ slot_append(struct slot *pslot_list, struct slot *next) {
 
 void
 slot_close(struct slot *pslot, int exit_code) {
+    close(pslot->io.out[PIPE_READ_END]);
+    close(pslot->io.err[PIPE_READ_END]);
     pslot->exit_code = exit_code;
     pslot->alive = false;
 }
