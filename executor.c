@@ -25,12 +25,8 @@ volatile int alive_children = 0;
 
 static void
 print_line(struct slot *pslot, int io_type, sstring buf, void *data) {
-    static int stdout_istty = -1;
-    if (stdout_istty == -1) {
-        stdout_istty = isatty(STDOUT_FILENO);
-    }
     FILE *output = (FILE *) data;
-    if (output == stdout && stdout_istty) {
+    if (output == stdout && stdout_isatty) {
         if (io_type == STDOUT_FILENO) {
             printf(ANSI_COLOR_GREEN "[O] %s -> " ANSI_COLOR_RESET, pslot->host);
         } else {

@@ -59,4 +59,6 @@ extern struct hss_config {
     char *output_file;
 } *pconfig;
 
+extern int stdout_isatty;
+
 #endif //_HSS_COMMON_H_

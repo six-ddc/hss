@@ -28,6 +28,8 @@ struct hss_config *pconfig = NULL;
 
 bool enable_local = false;
 
+int stdout_isatty = -1;
+
 enum state {
     REMOTE,
     INNER,
@@ -54,11 +56,23 @@ static const char *
 get_prompt() {
     switch (running_state) {
         case REMOTE:
-            return ANSI_COLOR_BOLD "[remote] >>> " ANSI_COLOR_RESET;
+            if (stdout_isatty) {
+                return ANSI_COLOR_BOLD "[remote] >>> " ANSI_COLOR_RESET;
+            } else {
+                return "[remote] >>> ";
+            }
         case INNER:
-            return ANSI_COLOR_MAGENTA_BOLD "[inner] >>> " ANSI_COLOR_RESET;
+            if (stdout_isatty) {
+                return ANSI_COLOR_MAGENTA_BOLD "[inner] >>> " ANSI_COLOR_RESET;
+            } else {
+                return "[inner] >>> ";
+            }
         case LOCAL:
-            return ANSI_COLOR_CYAN_BOLD "[local] >>> " ANSI_COLOR_RESET;
+            if (stdout_isatty) {
+                return ANSI_COLOR_CYAN_BOLD "[local] >>> " ANSI_COLOR_RESET;
+            } else {
+                return "[local] >>> ";
+            }
         default:
             return "[unknown] >>> ";
     }
@@ -273,7 +287,7 @@ parse_opts(int argc, char **argv) {
     }
 
     if (argc == 0) {
-        if (!isatty(STDOUT_FILENO)) {
+        if (!stdout_isatty && isatty(STDIN_FILENO)) {
             usage("missing command parameter");
         }
         return;
@@ -290,6 +304,7 @@ main(int argc, char **argv) {
 
     slots = calloc(1, sizeof(struct slot));
     inner_commands = calloc(1, sizeof(struct command));
+    stdout_isatty = isatty(STDOUT_FILENO);
 
     /* Set the default locale values according to environment variables. */
     setlocale(LC_ALL, "");
