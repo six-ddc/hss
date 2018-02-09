@@ -273,7 +273,7 @@ parse_opts(int argc, char **argv) {
     }
 
     if (argc == 0) {
-        if (!isatty(STDIN_FILENO)) {
+        if (!isatty(STDOUT_FILENO)) {
             usage("missing command parameter");
         }
         return;
