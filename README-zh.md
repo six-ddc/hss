@@ -33,24 +33,29 @@ Options:
 
 ## 安装
 
-* 安装依赖
+* MacOS
 
 ```bash
-## on MacOS
-brew install readline
-
-## on CentOS
-yum install readline-devel
-
-## on Ubuntu / Debian 
-apt-get install libreadline6-dev
+brew install hss
 ```
 
-* 编译&安装
+* Linux
 
-```bash
-make && make install
-```
+    * 安装依赖
+
+    ```bash
+    ## on CentOS
+    yum install readline-devel
+
+    ## on Ubuntu / Debian 
+    apt-get install libreadline6-dev
+    ```
+
+    * 编译&安装
+
+    ```bash
+    make && make install
+    ```
 
 * 或者直接下载[Release文件](https://github.com/six-ddc/hss/releases)
 

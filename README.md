@@ -48,24 +48,29 @@ Options:
 
 ## How to install it?
 
-* Install dependency
+* MacOS
 
 ```bash
-## on MacOS
-brew install readline
-
-## on CentOS
-yum install readline-devel
-
-## on Ubuntu / Debian 
-apt-get install libreadline6-dev
+brew install hss
 ```
 
-* Compile and install
+* Linux
 
-```bash
-make && make install
-```
+    * Install dependency
+
+    ```bash
+    ## on CentOS
+    yum install readline-devel
+
+    ## on Ubuntu / Debian 
+    apt-get install libreadline6-dev
+    ```
+
+    * Compile and install
+
+    ```bash
+    make && make install
+    ```
 
 * Or you can download the binary release [here](https://github.com/six-ddc/hss/releases) .
 
