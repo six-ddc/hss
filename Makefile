@@ -26,29 +26,14 @@ completion.o: completion.c
 executor.o: executor.c
 	$(CC) $(CFLAGS) -c executor.c -o executor.o
 
-command/help.o: command/help.c
-	$(CC) $(CFLAGS) -c command/help.c -o command/help.o
-
-command/host.o: command/host.c
-	$(CC) $(CFLAGS) -c command/host.c -o command/host.o
-
-command/config.o: command/config.c
-	$(CC) $(CFLAGS) -c command/config.c -o command/config.o
-
-command/upload.o: command/upload.c
-	$(CC) $(CFLAGS) -c command/upload.c -o command/upload.o
-
-command/download.o: command/download.c
-	$(CC) $(CFLAGS) -c command/download.c -o command/download.o
-
-all: main.o sstring.o slot.o completion.o executor.o command/help.o command/host.o command/config.o command/upload.o command/download.o
-	$(CC) $(CFLAGS) $(LIBS) main.o sstring.o slot.o completion.o executor.o command/*.o -o $(HSS_BIN) $(LDFLAGS)
+all: main.o sstring.o slot.o completion.o executor.o
+	$(CC) $(CFLAGS) $(LIBS) main.o sstring.o slot.o completion.o executor.o -o $(HSS_BIN) $(LDFLAGS)
 
 install:
 	@mkdir -p $(INSTALL_BIN)
 	$(INSTALL) $(HSS_BIN) $(INSTALL_BIN)
 
 clean:
-	rm -rf $(HSS_BIN) *.o command/*.o
+	rm -rf $(HSS_BIN) *.o
 
 .PHONY: install all clean

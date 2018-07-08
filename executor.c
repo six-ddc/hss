@@ -115,55 +115,6 @@ read_alive_slots(struct slot *pslot, struct pollfd *pfd, FILE *output) {
     }
 }
 
-int
-exec_local_cmd(char *cmd) {
-    return system(cmd);
-}
-
-static struct command *
-find_inner_command(char *name) {
-    struct command *p = inner_commands;
-    while ((p = p->next) != NULL) {
-        if (strcmp(name, p->name) == 0) {
-            return p;
-        }
-    }
-    return NULL;
-}
-
-int
-exec_inner_cmd(char *line) {
-    char word[32];
-    char *pword = word;
-    int i = 0;
-    struct command *cmd;
-    char *argv;
-
-    while (line[i] && whitespace(line[i]))
-        i++;
-    while (line[i] && !whitespace(line[i]) && i < 31) {
-        *pword++ = line[i++];
-    }
-    *pword = '\0';
-    if (i >= 31) {
-        eprintf("%s: command is too long\n", word);
-        return -1;
-    }
-
-    cmd = find_inner_command(word);
-    if (!cmd) {
-        printf("%s: no such command\n", word);
-        return -1;
-    }
-
-    while (whitespace(line[i]))
-        i++;
-
-    argv = line + i;
-
-    return (*cmd->func)(argv);
-}
-
 void
 reap_child_handler(int sig) {
     int exit_code;

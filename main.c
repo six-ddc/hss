@@ -9,11 +9,6 @@
 #include "completion.h"
 #include "slot.h"
 #include "command.h"
-#include "command/help.h"
-#include "command/host.h"
-#include "command/config.h"
-#include "command/upload.h"
-#include "command/download.h"
 
 const char *HSS_VERSION = "1.1";
 
@@ -26,15 +21,7 @@ struct slot *slots = NULL;
 
 struct hss_config *pconfig = NULL;
 
-bool enable_local = false;
-
 int stdout_isatty = -1;
-
-enum state {
-    REMOTE,
-    INNER,
-    LOCAL,
-} running_state = REMOTE;
 
 /* Forward declarations. */
 
@@ -54,61 +41,16 @@ sigint_handler(int sig) {
 
 static const char *
 get_prompt() {
-    switch (running_state) {
-        case REMOTE:
-            if (stdout_isatty) {
-                return ANSI_COLOR_BOLD "[remote] >>> " ANSI_COLOR_RESET;
-            } else {
-                return "[remote] >>> ";
-            }
-        case INNER:
-            if (stdout_isatty) {
-                return ANSI_COLOR_MAGENTA_BOLD "[inner] >>> " ANSI_COLOR_RESET;
-            } else {
-                return "[inner] >>> ";
-            }
-        case LOCAL:
-            if (stdout_isatty) {
-                return ANSI_COLOR_CYAN_BOLD "[local] >>> " ANSI_COLOR_RESET;
-            } else {
-                return "[local] >>> ";
-            }
-        default:
-            return "[unknown] >>> ";
+    if (stdout_isatty) {
+        return ANSI_COLOR_BOLD "[remote] >>> " ANSI_COLOR_RESET;
+    } else {
+        return "[remote] >>> ";
     }
 }
 
 static void
 update_completion_function() {
-    switch (running_state) {
-        case REMOTE:
-            rl_attempted_completion_function = remote_filepath_completion_func;
-            break;
-        case INNER:
-            rl_attempted_completion_function = inner_completion_func;
-            break;
-        case LOCAL:
-            rl_attempted_completion_function = NULL;
-            break;
-        default:
-            break;
-    }
-
-}
-
-static int
-key_esc_handler(int count, int key) {
-    if (enable_local) {
-        running_state = (running_state + 1) % (LOCAL + 1);
-    } else {
-        running_state = (running_state + 1) % (INNER + 1);
-    }
-    update_completion_function();
-
-    rl_on_new_line_with_prompt();
-    rl_set_prompt(get_prompt());
-    rl_redisplay();
-    return 0;
+    rl_attempted_completion_function = remote_filepath_completion_func;
 }
 
 /*
@@ -174,18 +116,6 @@ add_hostfile(const char *fname) {
     return 0;
 }
 
-struct command *inner_commands = NULL;
-
-void
-init_inner_commands() {
-    struct command* phelp = register_help();
-    struct command* phost =register_host();
-    struct command* pconfig =register_config();
-    struct command* pupload =register_upload();
-    struct command* pdownload =register_download();
-    ((((inner_commands->next = phelp)->next = phost)->next = pconfig)->next = pupload)->next = pdownload;
-}
-
 void usage(const char *msg) {
     if (!msg) {
         eprintf("\n"
@@ -198,7 +128,6 @@ void usage(const char *msg) {
                 "  -c, --common              specify the common ssh options (i.e. '-p 22 -i identity_file')\n"
                 "  -u, --user                the default user name to use when connecting to the remote server\n"
                 "  -o, --output=FILE         write remote command output to a file\n"
-                "  -l, --local               enable local running mode\n"
                 "  -v, --verbose             be more verbose\n"
                 "  -V, --version             show program version\n"
                 "  -h, --help                display this message\n"
@@ -231,7 +160,6 @@ parse_opts(int argc, char **argv) {
             {"common",        required_argument, NULL, 'c'},
             {"user",          required_argument, NULL, 'u'},
             {"output",        required_argument, NULL, 'o'},
-            {"local",         no_argument,       NULL, 'l'},
             {"verbose",       no_argument,       NULL, 'v'},
             {"version",       no_argument,       NULL, 'V'},
             {NULL,            0,                 NULL, 0}
@@ -264,9 +192,6 @@ parse_opts(int argc, char **argv) {
             case 'o':
                 pconfig->output_file = new_string(optarg);
                 break;
-            case 'l':
-                enable_local = true;
-                break;
             case 'v':
                 pconfig->verbose = true;
                 break;
@@ -283,7 +208,6 @@ parse_opts(int argc, char **argv) {
 
     if (slots->next == NULL) {
         eprintf("ssh slots is empty\n");
-        running_state = INNER;
     }
 
     if (argc == 0) {
@@ -303,7 +227,6 @@ main(int argc, char **argv) {
     char *line;
 
     slots = calloc(1, sizeof(struct slot));
-    inner_commands = calloc(1, sizeof(struct command));
     stdout_isatty = isatty(STDOUT_FILENO);
 
     /* Set the default locale values according to environment variables. */
@@ -313,11 +236,9 @@ main(int argc, char **argv) {
     parse_opts(argc, argv);
 
     signal(SIGINT, sigint_handler);
-    init_inner_commands();
 
     /* initialize readline */
     rl_readline_name = "hss";
-    rl_bind_key(27, key_esc_handler);
     rl_initialize();
 
     using_history();
@@ -350,19 +271,7 @@ main(int argc, char **argv) {
             if (ret != 0) {
                 eprintf("failed to write history: %s\n", strerror(errno));
             }
-            switch (running_state) {
-                case REMOTE:
-                    exec_remote_cmd(slots, line);
-                    break;
-                case INNER:
-                    exec_inner_cmd(line);
-                    break;
-                case LOCAL:
-                    exec_local_cmd(line);
-                    break;
-                default:
-                    break;
-            }
+            exec_remote_cmd(slots, line);
         }
         rl_free(line);
     }

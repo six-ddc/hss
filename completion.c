@@ -76,37 +76,3 @@ remote_filepath_completion_func(const char *text, int start, int end) {
     return matches;
 }
 
-static char *
-inner_command_generator(const char *text, int state) {
-    static struct command *pcmd;
-    static size_t len;
-    char *name;
-
-    if (!state) {
-        pcmd = inner_commands;
-        len = strlen(text);
-    }
-
-    while ((pcmd = pcmd->next) != NULL) {
-        name = pcmd->name;
-        if (strncmp(name, text, len) == 0) {
-            return strdup(name);
-        }
-    }
-
-    return NULL;
-}
-
-char **
-inner_completion_func(const char *text, int start, int end) {
-    char **matches = NULL;
-    //printf("\n[%s], [%s], %d, %d\n", text, rl_line_buffer, start, end);
-
-    if (start == 0) {
-        matches = rl_completion_matches(text, inner_command_generator);
-    }
-
-    rl_attempted_completion_over = 1;
-
-    return matches;
-}

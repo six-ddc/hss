@@ -49,8 +49,6 @@
 
 extern struct slot *slots;
 
-extern struct command *inner_commands;
-
 extern struct hss_config {
     bool verbose;
     char *user;

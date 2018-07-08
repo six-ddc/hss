@@ -9,12 +9,6 @@ void
 reap_child_handler(int sig);
 
 int
-exec_local_cmd(char *cmd);
-
-int
-exec_inner_cmd(char *line);
-
-int
 upload_file(struct slot* pslot_list, char* local_filename, char* remote_filename);
 
 int
