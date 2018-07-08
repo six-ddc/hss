@@ -41,9 +41,16 @@ sigint_handler(int sig) {
 static const char *
 get_prompt() {
     if (stdout_isatty) {
-        return ANSI_COLOR_BOLD "[remote] >>> " ANSI_COLOR_RESET;
+        return "$ " ANSI_COLOR_CYAN_BOLD;
     } else {
-        return "[remote] >>> ";
+        return "$ ";
+    }
+}
+
+static void
+reset_prompt_color() {
+    if (stdout_isatty) {
+        printf(ANSI_COLOR_RESET);
     }
 }
 
@@ -63,7 +70,9 @@ gets_interactive(const char *prompt) {
     rl_reset_screen_size();
 
     sigint_interrupt_enabled = true;
+    reset_prompt_color();
     line = readline(get_prompt());
+    reset_prompt_color();
     sigint_interrupt_enabled = false;
 
     return line;

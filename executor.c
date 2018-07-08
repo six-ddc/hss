@@ -29,7 +29,7 @@ print_line(struct slot *pslot, int io_type, sstring buf, void *data) {
         if (io_type == STDOUT_FILENO) {
             printf(ANSI_COLOR_GREEN "[O] %s -> " ANSI_COLOR_RESET, pslot->host);
         } else {
-            printf(ANSI_COLOR_RED "[E] %s -> " ANSI_COLOR_RESET, pslot->host);
+            printf(ANSI_COLOR_GREEN "[E] %s -> " ANSI_COLOR_RESET, pslot->host);
         }
     }
     fwrite(buf, 1, string_length(buf), output);
