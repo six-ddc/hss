@@ -8,7 +8,6 @@
 #include "executor.h"
 #include "completion.h"
 #include "slot.h"
-#include "command.h"
 
 const char *HSS_VERSION = "1.1";
 

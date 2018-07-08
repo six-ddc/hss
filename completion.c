@@ -4,7 +4,7 @@
 #include "sstring.h"
 #include "executor.h"
 #include "slot.h"
-#include "command.h"
+#include "common.h"
 
 static char **filename_list = NULL;
 static size_t filename_list_len = 0;

@@ -4,7 +4,6 @@
 #include "sstring.h"
 #include "executor.h"
 #include "slot.h"
-#include "command.h"
 
 #define MAXFD 1024
 
@@ -195,77 +194,6 @@ exec_ssh_cmd(struct slot *pslot, int argc, char **argv) {
     exit(1);
 }
 
-static void
-exec_scp_cmd(struct slot *pslot, int argc, char **argv) {
-    char host_argv[256];
-    char local_argv[256];
-    char *scp_argv[128];
-    int idx = 0;
-    int i;
-    int ret;
-    char *mode = argv[0];
-    char *local_filename, *remote_filename;
-    if (strcmp(mode, UPLOAD) == 0) {
-        local_filename = argv[1];
-        remote_filename = argv[2];
-    } else {
-        local_filename = argv[2];
-        remote_filename = argv[1];
-    }
-
-    close(STDIN_FILENO);
-
-    close(pslot->io.out[PIPE_READ_END]);
-    close(pslot->io.err[PIPE_READ_END]);
-
-    if (dup2(pslot->io.out[PIPE_WRITE_END], STDOUT_FILENO) == -1) {
-        eprintf("failed to dup stdout: %s\n", strerror(errno));
-    }
-    if (dup2(pslot->io.err[PIPE_WRITE_END], STDERR_FILENO) == -1) {
-        eprintf("failed to dup stderr: %s\n", strerror(errno));
-    }
-
-    scp_argv[idx++] = "-r";
-    scp_argv[idx++] = "-oNumberOfPasswordPrompts=0";
-    scp_argv[idx++] = "-oStrictHostKeyChecking=no";
-
-    for (i = 0; i < pconfig->common_options_argc; ++i) {
-        if (strcmp(pconfig->common_options_argv[i], "-p") == 0) {
-            scp_argv[idx++] = "-P";
-        } else {
-            scp_argv[idx++] = (char *) pconfig->common_options_argv[i];
-        }
-    }
-
-    for (i = 0; i < pslot->ssh_argc - 1; ++i) {
-        if (strcmp(pslot->ssh_argv[i], "-p") == 0) {
-            scp_argv[idx++] = "-P";
-        } else {
-            scp_argv[idx++] = pslot->ssh_argv[i];
-        }
-    }
-
-    if (pconfig->user && !strchr(pslot->ssh_argv[i], '@')) {
-        snprintf(host_argv, sizeof host_argv, "%s@%s:%s", pconfig->user, pslot->ssh_argv[i], remote_filename);
-    } else {
-        snprintf(host_argv, sizeof host_argv, "%s:%s", pslot->ssh_argv[i], remote_filename);
-    }
-    if (strcmp(mode, UPLOAD) == 0) {
-        scp_argv[idx++] = local_filename;
-        scp_argv[idx++] = host_argv;
-    } else {
-        scp_argv[idx++] = host_argv;
-        snprintf(local_argv, sizeof local_argv, "%s-%s", local_filename, pslot->ssh_argv[i]);
-        scp_argv[idx++] = local_argv;
-    }
-    scp_argv[idx++] = NULL;
-
-    ret = execvp("scp", scp_argv);
-
-    eprintf("failed to exec the scp binary: (%d) %s\n", ret, strerror(errno));
-    exit(1);
-}
-
 static int
 exec_command_foreach(struct slot *pslot_list, void (*fn_fork)(struct slot *, int, char **), int argc, char **argv) {
     struct pollfd *pfd;
@@ -331,20 +259,6 @@ exec_remote_cmd(struct slot *pslot_list, char *cmd) {
     const int argc = 1;
     char *argv[] = {cmd};
     return exec_command_foreach(pslot_list, exec_ssh_cmd, argc, argv);
-}
-
-int
-upload_file(struct slot *pslot_list, char *local_filename, char *remote_filename) {
-    const int argc = 3;
-    char *argv[] = {UPLOAD, local_filename, remote_filename};
-    return exec_command_foreach(pslot_list, exec_scp_cmd, argc, argv);
-}
-
-int
-download_file(struct slot *pslot_list, char *remote_filename, char *local_filename) {
-    const int argc = 3;
-    char *argv[] = {DOWNLOAD, remote_filename, local_filename};
-    return exec_command_foreach(pslot_list, exec_scp_cmd, argc, argv);
 }
 
 int
