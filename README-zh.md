@@ -26,7 +26,7 @@ Options:
 
 * 使用效果图如下：
 
-![](https://github.com/six-ddc/hss/blob/master/demo.gif?raw=true)
+[![asciicast](https://asciinema.org/a/78W5h0su6C5M8pafyqkUfBaTv.png)](https://asciinema.org/a/78W5h0su6C5M8pafyqkUfBaTv)
 
 ## 安装
 
