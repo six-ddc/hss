@@ -41,7 +41,7 @@ sigint_handler(int sig) {
 static const char *
 get_prompt() {
     if (stdout_isatty) {
-        return "$ " ANSI_COLOR_CYAN_BOLD;
+        return "$ " ANSI_COLOR_BOLD;
     } else {
         return "$ ";
     }
@@ -65,12 +65,11 @@ update_completion_function() {
  * Caller *must* have set up sigint_interrupt_jmp before calling.
  */
 static char *
-gets_interactive(const char *prompt) {
+gets_interactive() {
     char *line;
     rl_reset_screen_size();
 
     sigint_interrupt_enabled = true;
-    reset_prompt_color();
     line = readline(get_prompt());
     reset_prompt_color();
     sigint_interrupt_enabled = false;
@@ -135,6 +134,7 @@ void usage(const char *msg) {
                 "  -H, --host                specifies a host option, support the same options as the ssh command\n"
                 "  -c, --common              specify the common ssh options (i.e. '-p 22 -i identity_file')\n"
                 "  -u, --user                the default user name to use when connecting to the remote server\n"
+                "  -i, --vi                  use a vi-style line editing interface(default: emacs)\n"
                 "  -o, --output=FILE         write remote command output to a file\n"
                 "  -v, --verbose             be more verbose\n"
                 "  -V, --version             show program version\n"
@@ -163,6 +163,7 @@ parse_opts(int argc, char **argv) {
 
     static struct option long_opts[] = {
             {"help",          no_argument,       NULL, 'h'},
+            {"vi",            no_argument,       NULL, 'i'},
             {"file",          required_argument, NULL, 'f'},
             {"host",          required_argument, NULL, 'H'},
             {"common",        required_argument, NULL, 'c'},
@@ -172,7 +173,7 @@ parse_opts(int argc, char **argv) {
             {"version",       no_argument,       NULL, 'V'},
             {NULL,            0,                 NULL, 0}
     };
-    const char *short_opts = "hf:H:c:u:o:lvV";
+    const char *short_opts = "hif:H:c:u:o:lvV";
 
     pconfig = calloc(1, sizeof(struct hss_config));
 
@@ -180,6 +181,9 @@ parse_opts(int argc, char **argv) {
         switch (opt) {
             case 'h':
                 usage(NULL);
+                break;
+            case 'i':
+                rl_editing_mode = 0;
                 break;
             case 'f':
                 add_hostfile(optarg);
@@ -229,6 +233,12 @@ parse_opts(int argc, char **argv) {
 }
 
 int
+startup_hook() {
+    reset_prompt_color();
+    return 0;
+}
+
+int
 main(int argc, char **argv) {
 
     int ret = 0;
@@ -246,6 +256,7 @@ main(int argc, char **argv) {
     signal(SIGINT, sigint_handler);
 
     /* initialize readline */
+    rl_startup_hook = startup_hook;
     rl_readline_name = "hss";
     rl_initialize();
 
@@ -265,7 +276,7 @@ main(int argc, char **argv) {
         }
         fflush(stdout);
 
-        line = gets_interactive(">>> ");
+        line = gets_interactive();
 
         if (line == NULL || strcmp(line, "exit") == 0) {
             if (line == NULL)
