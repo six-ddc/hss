@@ -100,18 +100,14 @@ isspace_string(char *str) {
 
 static int
 add_hostfile(const char *fname) {
-    FILE *f;
     char line[1024];
     char *p;
-    if (strcmp(fname, "-") == 0) {
-        f = stdin;
-    } else {
-        f = fopen(fname, "r");
-        if (!f) {
-            eprintf("Can not open file %s (%s)\n", fname, strerror(errno));
-            exit(1);
-        }
+    FILE *f = fopen(fname, "r");
+    if (!f) {
+        eprintf("can not open file %s (%s)\n", fname, strerror(errno));
+        exit(1);
     }
+
     while (fgets(line, sizeof(line), f)) {
         p = line;
         while (isspace(*p)) p++;
@@ -130,7 +126,7 @@ void usage(const char *msg) {
                 "\n"
                 "Usage: hss [-f hostfile] [-o file] [-u username] [command]\n\n"
                 "Options:\n"
-                "  -f, --file=FILE           file with the list of hosts or - for stdin\n"
+                "  -f, --file=FILE           file with the list of hosts\n"
                 "  -H, --host                specifies a host option, support the same options as the ssh command\n"
                 "  -c, --common              specify the common ssh options (i.e. '-p 22 -i identity_file')\n"
                 "  -u, --user                the default user name to use when connecting to the remote server\n"

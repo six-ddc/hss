@@ -22,14 +22,17 @@ Command is executed on all servers in parallel. Execution on one server does not
 Usage: hss [-f hostfile] [-o file] [-u username] [command]
 
 Options:
-  -f, --file=FILE           file with the list of hosts or - for stdin
+  -f, --file=FILE           file with the list of hosts
   -H, --host                specifies a host option, support the same options as the ssh command
   -c, --common              specify the common ssh options (i.e. '-p 22 -i identity_file')
   -u, --user                the default user name to use when connecting to the remote server
+  -i, --vi                  use a vi-style line editing interface(default: emacs)
   -o, --output=FILE         write remote command output to a file
   -v, --verbose             be more verbose
   -V, --version             show program version
   -h, --help                display this message
+
+For more information, see https://github.com/six-ddc/hss
 ```
 
 * This is a screenshot
