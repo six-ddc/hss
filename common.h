@@ -55,6 +55,7 @@ extern struct hss_config {
     int common_options_argc;
     const char **common_options_argv;
     char *output_file;
+    int concurrency;
 } *pconfig;
 
 extern int stdout_isatty;
