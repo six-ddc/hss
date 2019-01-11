@@ -17,8 +17,9 @@ Options:
   -f, --file=FILE           file with the list of hosts
   -H, --host                specifies a host option, support the same options as the ssh command
   -c, --common              specify the common ssh options (i.e. '-p 22 -i identity_file')
+  -l, --limit               number of multiple ssh to perform at a time (default: unlimited)
   -u, --user                the default user name to use when connecting to the remote server
-  -i, --vi                  use a vi-style line editing interface(default: emacs)
+  -i, --vi                  force use a vi-style line editing interface
   -o, --output=FILE         write remote command output to a file
   -v, --verbose             be more verbose
   -V, --version             show program version

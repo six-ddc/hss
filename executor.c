@@ -195,7 +195,8 @@ exec_ssh_cmd(struct slot *pslot, int argc, char **argv) {
 }
 
 static int
-exec_command_foreach(struct slot *pslot_list, void (*fn_fork)(struct slot *, int, char **), int argc, char **argv) {
+exec_command_foreach(struct slot *pslot_list, void (*fn_fork)(struct slot *, int, char **), int argc, char **argv,
+                     int concurrency) {
     struct pollfd *pfd;
     struct slot *pslot_head = pslot_list->next;
     struct slot *pslot = pslot_head;
@@ -203,7 +204,7 @@ exec_command_foreach(struct slot *pslot_list, void (*fn_fork)(struct slot *, int
     FILE *output;
     size_t cnt = 0;
 
-    if(!pslot) {
+    if (!pslot) {
         return 0;
     }
 
@@ -231,9 +232,11 @@ exec_command_foreach(struct slot *pslot_list, void (*fn_fork)(struct slot *, int
     while (pslot || alive_children) {
         BLOCK_SIGCHLD;
         if (pslot) {
-            fork_command(pslot, fn_fork, argc, argv);
-            pslot = pslot->next;
-            usleep(10 * 1000);
+            if (concurrency <= 0 || alive_children < concurrency) {
+                fork_command(pslot, fn_fork, argc, argv);
+                pslot = pslot->next;
+                usleep(10 * 1000);
+            }
         }
 
         poll_alive_slots(pslot_head, pfd, &cnt);
@@ -255,10 +258,10 @@ exec_command_foreach(struct slot *pslot_list, void (*fn_fork)(struct slot *, int
 }
 
 int
-exec_remote_cmd(struct slot *pslot_list, char *cmd) {
+exec_remote_cmd(struct slot *pslot_list, char *cmd, int concurrency) {
     const int argc = 1;
     char *argv[] = {cmd};
-    return exec_command_foreach(pslot_list, exec_ssh_cmd, argc, argv);
+    return exec_command_foreach(pslot_list, exec_ssh_cmd, argc, argv, concurrency);
 }
 
 int

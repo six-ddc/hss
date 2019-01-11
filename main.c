@@ -129,8 +129,9 @@ void usage(const char *msg) {
                 "  -f, --file=FILE           file with the list of hosts\n"
                 "  -H, --host                specifies a host option, support the same options as the ssh command\n"
                 "  -c, --common              specify the common ssh options (i.e. '-p 22 -i identity_file')\n"
+                "  -l, --limit               number of multiple ssh to perform at a time (default: unlimited)\n"
                 "  -u, --user                the default user name to use when connecting to the remote server\n"
-                "  -i, --vi                  use a vi-style line editing interface(default: emacs)\n"
+                "  -i, --vi                  force use a vi-style line editing interface\n"
                 "  -o, --output=FILE         write remote command output to a file\n"
                 "  -v, --verbose             be more verbose\n"
                 "  -V, --version             show program version\n"
@@ -138,7 +139,7 @@ void usage(const char *msg) {
                 "\n"
                 "For more information, see https://github.com/six-ddc/hss"
                 "\n"
-               );
+        );
         exit(0);
     } else {
         eprintf("%s\n", msg);
@@ -158,18 +159,19 @@ parse_opts(int argc, char **argv) {
     int opt;
 
     static struct option long_opts[] = {
-            {"help",          no_argument,       NULL, 'h'},
-            {"vi",            no_argument,       NULL, 'i'},
-            {"file",          required_argument, NULL, 'f'},
-            {"host",          required_argument, NULL, 'H'},
-            {"common",        required_argument, NULL, 'c'},
-            {"user",          required_argument, NULL, 'u'},
-            {"output",        required_argument, NULL, 'o'},
-            {"verbose",       no_argument,       NULL, 'v'},
-            {"version",       no_argument,       NULL, 'V'},
-            {NULL,            0,                 NULL, 0}
+            {"help",    no_argument,       NULL, 'h'},
+            {"vi",      no_argument,       NULL, 'i'},
+            {"file",    required_argument, NULL, 'f'},
+            {"host",    required_argument, NULL, 'H'},
+            {"limit",   required_argument, NULL, 'l'},
+            {"common",  required_argument, NULL, 'c'},
+            {"user",    required_argument, NULL, 'u'},
+            {"output",  required_argument, NULL, 'o'},
+            {"verbose", no_argument,       NULL, 'v'},
+            {"version", no_argument,       NULL, 'V'},
+            {NULL, 0,                      NULL, 0}
     };
-    const char *short_opts = "hif:H:c:u:o:lvV";
+    const char *short_opts = "hif:H:c:u:o:l:vV";
 
     pconfig = calloc(1, sizeof(struct hss_config));
 
@@ -186,6 +188,9 @@ parse_opts(int argc, char **argv) {
                 break;
             case 'H':
                 add_host(optarg);
+                break;
+            case 'l':
+                pconfig->concurrency = atoi(optarg);
                 break;
             case 'c':
                 ret = parse_argv_string(optarg, &pconfig->common_options_argc, &pconfig->common_options_argv);
@@ -224,7 +229,7 @@ parse_opts(int argc, char **argv) {
         }
         return;
     }
-    exec_remote_cmd(slots, argv[0]);
+    exec_remote_cmd(slots, argv[0], pconfig->concurrency);
     exit(0);
 }
 
@@ -286,7 +291,7 @@ main(int argc, char **argv) {
             if (ret != 0) {
                 eprintf("failed to write history: %s\n", strerror(errno));
             }
-            exec_remote_cmd(slots, line);
+            exec_remote_cmd(slots, line, pconfig->concurrency);
         }
         rl_free(line);
     }
