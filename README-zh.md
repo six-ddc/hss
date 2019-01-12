@@ -11,19 +11,19 @@ hss是一款可交互式的ssh批量执行命令的客户端，交互输入模�
 ## 预览
 
 ```
-Usage: hss [-f hostfile] [-o file] [-u username] [command]
+Usage: hss [-f hostfile] [-o file] [-u username] [command]...
 
 Options:
-  -f, --file=FILE           file with the list of hosts
-  -H, --host                specifies a host option, support the same options as the ssh command
-  -c, --common              specify the common ssh options (i.e. '-p 22 -i identity_file')
-  -l, --limit               number of multiple ssh to perform at a time (default: unlimited)
-  -u, --user                the default user name to use when connecting to the remote server
-  -i, --vi                  force use a vi-style line editing interface
-  -o, --output=FILE         write remote command output to a file
-  -v, --verbose             be more verbose
-  -V, --version             show program version
-  -h, --help                display this message
+  -f file        file with the list of hosts
+  -H host        specifies a host option, support the same options as the ssh command
+  -l limit       number of multiple ssh to perform at a time (default: unlimited)
+  -u user        the default user name to use when connecting to the remote server
+  -c opts        specify the common ssh options (i.e. '-p 22 -i identity_file')
+  -o file        write remote command output to a file
+  -i             force use a vi-style line editing interface
+  -v             be more verbose
+  -V             show program version
+  -h             display this message
 
 For more information, see https://github.com/six-ddc/hss
 ```

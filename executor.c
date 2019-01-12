@@ -149,11 +149,8 @@ exec_ssh_cmd(struct slot *pslot, int argc, char **argv) {
     int idx = 0;
     int i;
     int ret;
-    char *cmd = argv[0];
 
     close(STDIN_FILENO);
-
-    // printf("cmd: %s\n", cmd);
 
     close(pslot->io.out[PIPE_READ_END]);
     close(pslot->io.err[PIPE_READ_END]);
@@ -185,7 +182,9 @@ exec_ssh_cmd(struct slot *pslot, int argc, char **argv) {
             ssh_argv[idx++] = pslot->ssh_argv[i];
         }
     }
-    ssh_argv[idx++] = cmd;
+    for (i = 0; i < argc; ++i) {
+        ssh_argv[idx++] = argv[i];
+    }
     ssh_argv[idx++] = NULL;
 
     ret = execvp("ssh", ssh_argv);
@@ -261,6 +260,11 @@ int
 exec_remote_cmd(struct slot *pslot_list, char *cmd, int concurrency) {
     const int argc = 1;
     char *argv[] = {cmd};
+    return exec_remote_cmd_args(pslot_list, argc, argv, concurrency);
+}
+
+int
+exec_remote_cmd_args(struct slot *pslot_list, int argc, char **argv, int concurrency) {
     return exec_command_foreach(pslot_list, exec_ssh_cmd, argc, argv, concurrency);
 }
 

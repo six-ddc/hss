@@ -121,21 +121,20 @@ add_hostfile(const char *fname) {
 
 void usage(const char *msg) {
     if (!msg) {
-        eprintf("\n"
-                "An interactive parallel ssh client.\n"
+        eprintf("An interactive parallel ssh client.\n"
                 "\n"
-                "Usage: hss [-f hostfile] [-o file] [-u username] [command]\n\n"
+                "Usage: hss [-f hostfile] [-o file] [-u username] [command]...\n\n"
                 "Options:\n"
-                "  -f, --file=FILE           file with the list of hosts\n"
-                "  -H, --host                specifies a host option, support the same options as the ssh command\n"
-                "  -c, --common              specify the common ssh options (i.e. '-p 22 -i identity_file')\n"
-                "  -l, --limit               number of multiple ssh to perform at a time (default: unlimited)\n"
-                "  -u, --user                the default user name to use when connecting to the remote server\n"
-                "  -i, --vi                  force use a vi-style line editing interface\n"
-                "  -o, --output=FILE         write remote command output to a file\n"
-                "  -v, --verbose             be more verbose\n"
-                "  -V, --version             show program version\n"
-                "  -h, --help                display this message\n"
+                "  -f file        file with the list of hosts\n"
+                "  -H host        specifies a host option, support the same options as the ssh command\n"
+                "  -l limit       number of multiple ssh to perform at a time (default: unlimited)\n"
+                "  -u user        the default user name to use when connecting to the remote server\n"
+                "  -c opts        specify the common ssh options (i.e. '-p 22 -i identity_file')\n"
+                "  -o file        write remote command output to a file\n"
+                "  -i             force use a vi-style line editing interface\n"
+                "  -v             be more verbose\n"
+                "  -V             show program version\n"
+                "  -h             display this message\n"
                 "\n"
                 "For more information, see https://github.com/six-ddc/hss"
                 "\n"
@@ -158,24 +157,11 @@ parse_opts(int argc, char **argv) {
     int ret;
     int opt;
 
-    static struct option long_opts[] = {
-            {"help",    no_argument,       NULL, 'h'},
-            {"vi",      no_argument,       NULL, 'i'},
-            {"file",    required_argument, NULL, 'f'},
-            {"host",    required_argument, NULL, 'H'},
-            {"limit",   required_argument, NULL, 'l'},
-            {"common",  required_argument, NULL, 'c'},
-            {"user",    required_argument, NULL, 'u'},
-            {"output",  required_argument, NULL, 'o'},
-            {"verbose", no_argument,       NULL, 'v'},
-            {"version", no_argument,       NULL, 'V'},
-            {NULL, 0,                      NULL, 0}
-    };
     const char *short_opts = "hif:H:c:u:o:l:vV";
 
     pconfig = calloc(1, sizeof(struct hss_config));
 
-    while ((opt = getopt_long(argc, argv, short_opts, long_opts, NULL)) != -1) {
+    while ((opt = getopt(argc, argv, short_opts)) != -1) {
         switch (opt) {
             case 'h':
                 usage(NULL);
@@ -213,7 +199,6 @@ parse_opts(int argc, char **argv) {
                 break;
             default:
                 usage(NULL);
-                break;
         }
     }
     argc -= optind;
@@ -229,7 +214,7 @@ parse_opts(int argc, char **argv) {
         }
         return;
     }
-    exec_remote_cmd(slots, argv[0], pconfig->concurrency);
+    exec_remote_cmd_args(slots, argc, argv, pconfig->concurrency);
     exit(0);
 }
 
