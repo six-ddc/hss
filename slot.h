@@ -26,7 +26,7 @@ slot {
     int exit_code;
     bool alive;
     int poll_index;
-    FILE* output;
+    FILE *output;
 
     sstring out_buff;
     sstring err_buff;
@@ -42,7 +42,7 @@ void
 slot_read_line(struct slot *pslot, int io_type, fn_getline cb, void *cb_data);
 
 void
-slot_read_remains(struct slot *pslot, int io_type, fn_getline cb, void *cb_data);
+slot_read_remains(struct slot *pslot, fn_getline cb, void *cb_data);
 
 struct slot *
 new_slot(const char *args);

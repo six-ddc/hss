@@ -38,41 +38,20 @@ slot_read_line(struct slot *pslot, int io_type, fn_getline cb, void *cb_data) {
 }
 
 void
-slot_read_remains(struct slot *pslot, int io_type, fn_getline cb, void *cb_data) {
-    int fd;
+slot_read_remains(struct slot *pslot, fn_getline cb, void *cb_data) {
     sstring *buff;
-    ssize_t len;
-    char str[2048];
-    int i;
-    switch (io_type) {
-        case STDOUT_FILENO:
-            fd = pslot->io.out[PIPE_READ_END];
-            buff = &pslot->out_buff;
-            break;
-        case STDERR_FILENO:
-            fd = pslot->io.err[PIPE_READ_END];
-            buff = &pslot->err_buff;
-            break;
-        default:
-            return;
+    slot_read_line(pslot, STDOUT_FILENO, cb, cb_data);
+    slot_read_line(pslot, STDERR_FILENO, cb, cb_data);
+
+    buff = &pslot->out_buff;
+    if (*buff && string_length(*buff) > 0) {
+        cb(pslot, STDOUT_FILENO, *buff, cb_data);
+        string_free(*buff);
+        *buff = NULL;
     }
-    while (1) {
-        len = read(fd, str, 2048);
-        if (len == 0) break;
-        if (len < 0) {
-            if (errno == EINTR) continue;
-            break;
-        }
-        for (i = 0; i < len; ++i) {
-            *buff = string_append_char(*buff, str[i]);
-            if (str[i] == '\n') {
-                cb(pslot, io_type, *buff, cb_data);
-                *buff = string_clear(*buff);
-            }
-        }
-    }
-    if (*buff && string_length(*buff) != 0) {
-        cb(pslot, io_type, *buff, cb_data);
+    buff = &pslot->err_buff;
+    if (*buff && string_length(*buff) > 0) {
+        cb(pslot, STDERR_FILENO, *buff, cb_data);
         string_free(*buff);
         *buff = NULL;
     }

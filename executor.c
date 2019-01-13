@@ -130,8 +130,7 @@ reap_child_handler(int sig) {
         if (!pslot) {
             continue;
         }
-        slot_read_remains(pslot, STDOUT_FILENO, print_line, pslot->output);
-        slot_read_remains(pslot, STDERR_FILENO, print_line, pslot->output);
+        slot_read_remains(pslot, print_line, pslot->output);
         slot_close(pslot, exit_code);
         if (pconfig->verbose) {
             printf("wait pid %d, status code %d\n", pslot->pid, pslot->exit_code);
