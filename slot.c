@@ -36,23 +36,40 @@ slot_read_line(struct slot *pslot, int io_type, fn_getline cb, void *cb_data) {
 
 void
 slot_read_remains(struct slot *pslot, int io_type, fn_getline cb, void *cb_data) {
+    int fd;
     sstring *buff;
+    char c;
+    ssize_t i;
     switch (io_type) {
         case STDOUT_FILENO:
+            fd = pslot->io.out[PIPE_READ_END];
             buff = &pslot->out_buff;
             break;
         case STDERR_FILENO:
+            fd = pslot->io.err[PIPE_READ_END];
             buff = &pslot->err_buff;
             break;
         default:
             return;
     }
-    if (!(*buff) || !string_length(*buff)) {
-        return;
+    while (1) {
+        i = read(fd, &c, 1);
+        if (i == 0) break;
+        if (i < 0) {
+            if (errno == EINTR) continue;
+            break;
+        }
+        *buff = string_append_char(*buff, c);
+        if (c == '\n') {
+            cb(pslot, io_type, *buff, cb_data);
+            *buff = string_clear(*buff);
+        }
     }
-    cb(pslot, io_type, *buff, cb_data);
-    string_free(*buff);
-    *buff = NULL;
+    if (*buff && string_length(*buff) != 0) {
+        cb(pslot, io_type, *buff, cb_data);
+        string_free(*buff);
+        *buff = NULL;
+    }
 }
 
 struct slot *
