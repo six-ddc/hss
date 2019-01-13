@@ -27,7 +27,7 @@ executor.o: executor.c
 	$(CC) $(CFLAGS) -c executor.c -o executor.o
 
 all: main.o sstring.o slot.o completion.o executor.o
-	$(CC) $(CFLAGS) $(LIBS) main.o sstring.o slot.o completion.o executor.o -o $(HSS_BIN) $(LDFLAGS)
+	$(CC) $(CFLAGS) main.o sstring.o slot.o completion.o executor.o $(LIBS) -o $(HSS_BIN) $(LDFLAGS)
 
 install:
 	@mkdir -p $(INSTALL_BIN)
