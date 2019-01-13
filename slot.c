@@ -5,8 +5,9 @@ void
 slot_read_line(struct slot *pslot, int io_type, fn_getline cb, void *cb_data) {
     int fd;
     sstring *buff;
-    char c;
-    ssize_t i;
+    ssize_t len;
+    char str[2048];
+    int i;
     switch (io_type) {
         case STDOUT_FILENO:
             fd = pslot->io.out[PIPE_READ_END];
@@ -20,16 +21,18 @@ slot_read_line(struct slot *pslot, int io_type, fn_getline cb, void *cb_data) {
             return;
     }
     while (1) {
-        i = read(fd, &c, 1);
-        if (i == 0) break;
-        if (i < 0) {
+        len = read(fd, str, 2048);
+        if (len == 0) break;
+        if (len < 0) {
             if (errno == EINTR) continue;
             break;
         }
-        *buff = string_append_char(*buff, c);
-        if (c == '\n') {
-            cb(pslot, io_type, *buff, cb_data);
-            *buff = string_clear(*buff);
+        for (i = 0; i < len; ++i) {
+            *buff = string_append_char(*buff, str[i]);
+            if (str[i] == '\n') {
+                cb(pslot, io_type, *buff, cb_data);
+                *buff = string_clear(*buff);
+            }
         }
     }
 }
@@ -38,8 +41,9 @@ void
 slot_read_remains(struct slot *pslot, int io_type, fn_getline cb, void *cb_data) {
     int fd;
     sstring *buff;
-    char c;
-    ssize_t i;
+    ssize_t len;
+    char str[2048];
+    int i;
     switch (io_type) {
         case STDOUT_FILENO:
             fd = pslot->io.out[PIPE_READ_END];
@@ -53,16 +57,18 @@ slot_read_remains(struct slot *pslot, int io_type, fn_getline cb, void *cb_data)
             return;
     }
     while (1) {
-        i = read(fd, &c, 1);
-        if (i == 0) break;
-        if (i < 0) {
+        len = read(fd, str, 2048);
+        if (len == 0) break;
+        if (len < 0) {
             if (errno == EINTR) continue;
             break;
         }
-        *buff = string_append_char(*buff, c);
-        if (c == '\n') {
-            cb(pslot, io_type, *buff, cb_data);
-            *buff = string_clear(*buff);
+        for (i = 0; i < len; ++i) {
+            *buff = string_append_char(*buff, str[i]);
+            if (str[i] == '\n') {
+                cb(pslot, io_type, *buff, cb_data);
+                *buff = string_clear(*buff);
+            }
         }
     }
     if (*buff && string_length(*buff) != 0) {
@@ -141,7 +147,7 @@ slot_free(struct slot *pslot) {
 
 struct slot *
 slot_find_by_pid(struct slot *pslot_list, int pid) {
-    struct slot* pslot = pslot_list;
+    struct slot *pslot = pslot_list;
     while ((pslot = pslot->next) != NULL) {
         if (pslot->pid == pid) {
             return pslot;
