@@ -9,9 +9,9 @@
 static char **filename_list = NULL;
 static size_t filename_list_len = 0;
 
-static const char *complete_path_cmd = "command ls -aF1d %s* | while read line; do "
-                                       "if [[ \"$line\" =~ @$ ]] && [ -d \"${line%%@}\" ]; then "
-                                       "echo \"${line%%@}/\"; else echo \"$line\"; fi;"
+static const char *complete_path_cmd = "command ls -aF1d %s* | while read line; "
+                                       "do if [[ \"$line\" =~ @$ ]] && [ -d \"${line%%@}\" ]; "
+                                       "then echo \"${line%%@}/\"; else echo \"$line\"; fi; "
                                        "done";
 
 static const char *complete_bin_cmd = "command echo $PATH | command tr ':' '\n' | while read path; do command ls -1a $path; done";
