@@ -87,30 +87,14 @@ hss命令本身也支持透传参数到ssh命令，，比如指定了`-c '-oConn
 
 ### readline使用
 
-可交互式的命令输入，基于`libreadline`实现，支持远程命令补全，远程文件路径补全，历史命令保存，历史命令搜索，快捷移动等
+可交互式的命令输入，基于`libreadline`实现，支持远程命令补全，远程文件路径补全，历史命令保存，历史命令搜索，快捷移动等。（更多命令参考[readline说明](http://cnswww.cns.cwru.edu/php/chet/readline/readline.html#SEC1)）
 
 * 输入的历史命令保存在`~/.hss_history`文件中
 * 远程命令和文件路径补全，数据信息来自于第一个host连接
 * 进行文件路径补全时，需要当前单词的首字符是`/`, `~`, `.`才可提示补全
-* 对于是符号链接的目录，路径补全时会提示以`@`结尾，目前还没找到好的解决办法
-
-以下列举一些简单的快捷命令（更多命令参考[readline说明](http://cnswww.cns.cwru.edu/php/chet/readline/readline.html#SEC1)）
-
-```
-C-a       Move to the start of the line.
-C-e       Move to the end of the line.
-M-f       Move forward a word, where a word is composed of letters and digits.
-M-b       Move backward a word.
-
-C-l       Clear the screen, reprinting the current line at the top. 
-C-u       Kill backward from the cursor to the beginning of the current line.
-C-w       Kill the word behind point, using white space as a word boundary.
-
-C-r       Search backward starting at the current line and moving up through the history as necessary.
-```
 
 ## 下版本方向
 
-* [ ] 解决链接目录补全显示@结尾的问题
+* [x] 解决链接目录补全显示@结尾的问题
 
 

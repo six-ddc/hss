@@ -9,6 +9,13 @@
 static char **filename_list = NULL;
 static size_t filename_list_len = 0;
 
+static const char *complete_path_cmd = "command ls -aF1d %s* | while read line; "
+                                       "do if [[ \"$line\" =~ @$ ]] && [ -d \"${line%%@}\" ]; "
+                                       "then echo \"${line%%@}/\"; else echo \"$line\"; fi; "
+                                       "done";
+
+static const char *complete_bin_cmd = "command echo $PATH | command tr ':' '\n' | while read path; do command ls -1a $path; done";
+
 static char *
 filepath_generator(const char *text, int state) {
     static size_t list_index, len;
@@ -49,9 +56,9 @@ remote_filepath_completion_func(const char *text, int start, int end) {
     sstring out;
 
     if (start != end && (text[0] == '/' || text[0] == '~' || text[0] == '.')) {
-        snprintf(cmd, 1024, "command ls -aF1d %s*", text);
+        snprintf(cmd, 1024, complete_path_cmd, text);
     } else {
-        strcpy(cmd, "command echo $PATH | command tr ':' '\n' | while read path; do command ls -1a $path; done");
+        strcpy(cmd, complete_bin_cmd);
     }
 
     filename_list_len = 0;
