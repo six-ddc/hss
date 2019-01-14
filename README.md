@@ -93,29 +93,13 @@ Passthrough of `ssh` arguments are supported. For example, by specify `-c '-oCon
 
 ### Usage of readline
 
-The interactive input is implemented on `libreadline`, supporting command and path completion from remote, history storage and searching, moving around, etc.
+The interactive input is implemented on `libreadline`, supporting command and path completion from remote, history storage and searching, moving around, etc. (please refer to [readline](http://cnswww.cns.cwru.edu/php/chet/readline/readline.html#SEC1) for more)
 
 * Command history is stored in file `~/.hss_history`.
 * Completion of commands and paths are based on the first server in the list.
 * Path completion is available when the first input character is `/`, `~` or `.`.
-* The path completion will end with an `@` character for directory symbol-links. (We haven't found any solution to solve it yet)
-
-Following is a list of quick commands (please refer to [readline](http://cnswww.cns.cwru.edu/php/chet/readline/readline.html#SEC1) for more)
-
-```
-C-a       Move to the start of the line.
-C-e       Move to the end of the line.
-M-f       Move forward a word, where a word is composed of letters and digits.
-M-b       Move backward a word.
-
-C-l       Clear the screen, reprinting the current line at the top. 
-C-u       Kill backward from the cursor to the beginning of the current line.
-C-w       Kill the word behind point, using white space as a word boundary.
-
-C-r       Search backward starting at the current line and moving up through the history as necessary.
-```
 
 ## Goals of the future versions
 
-* [ ] Solve the "@" suffix problem on directory symbol-link.
+* [x] Solve the "@" suffix problem on directory symbol-link.
 
