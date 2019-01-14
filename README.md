@@ -38,7 +38,7 @@ For more information, see https://github.com/six-ddc/hss
 
 * This is a screenshot
 
-[![asciicast](https://asciinema.org/a/78W5h0su6C5M8pafyqkUfBaTv.png)](https://asciinema.org/a/78W5h0su6C5M8pafyqkUfBaTv)
+[![asciicast](https://asciinema.org/a/YDLWSeD3SvOaxGvBQLWhTeOiC.svg)](https://asciinema.org/a/YDLWSeD3SvOaxGvBQLWhTeOiC)
 
 ## How to install it?
 
