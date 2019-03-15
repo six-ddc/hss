@@ -30,7 +30,7 @@ For more information, see https://github.com/six-ddc/hss
 
 * 使用效果图如下：
 
-[![asciicast](https://asciinema.org/a/YDLWSeD3SvOaxGvBQLWhTeOiC.svg)](https://asciinema.org/a/YDLWSeD3SvOaxGvBQLWhTeOiC)
+[![asciicast](https://asciinema.org/a/233954.svg)](https://asciinema.org/a/233954)
 
 ## 安装
 
