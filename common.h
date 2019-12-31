@@ -16,22 +16,23 @@
 
 #ifndef NOT_USER_COLOR
 // RL_PROMPT_START_IGNORE RL_PROMPT_END_IGNORE
-#define ANSI_COLOR_RED     "\001\x1b[31m\002"
-#define ANSI_COLOR_GREEN   "\001\x1b[32m\002"
-#define ANSI_COLOR_YELLOW  "\001\x1b[33m\002"
-#define ANSI_COLOR_BLUE    "\001\x1b[34m\002"
-#define ANSI_COLOR_MAGENTA "\001\x1b[35m\002"
-#define ANSI_COLOR_CYAN    "\001\x1b[36m\002"
+#define ANSI_COLOR_RED     "\033[0;31m"
+#define ANSI_COLOR_GREEN   "\033[0;32m"
+#define ANSI_COLOR_YELLOW  "\033[0;33m"
+#define ANSI_COLOR_BLUE    "\033[0;34m"
+#define ANSI_COLOR_MAGENTA "\033[0;35m"
+#define ANSI_COLOR_CYAN    "\033[0;36m"
 
-#define ANSI_COLOR_BOLD         "\001\x1b[1m\002"
-#define ANSI_COLOR_RED_BOLD     "\001\x1b[31;1m\002"
-#define ANSI_COLOR_GREEN_BOLD   "\001\x1b[32;1m\002"
-#define ANSI_COLOR_YELLOW_BOLD  "\001\x1b[33;1m\002"
-#define ANSI_COLOR_BLUE_BOLD    "\001\x1b[34;1m\002"
-#define ANSI_COLOR_MAGENTA_BOLD "\001\x1b[35;1m\002"
-#define ANSI_COLOR_CYAN_BOLD    "\001\x1b[36;1m\002"
+#define ANSI_COLOR_BOLD         "\033[1m"
+#define ANSI_COLOR_RED_BOLD     "\033[1;31m"
+#define ANSI_COLOR_GREEN_BOLD   "\033[1;31m"
+#define ANSI_COLOR_YELLOW_BOLD  "\033[1;31m"
+#define ANSI_COLOR_BLUE_BOLD    "\033[1;31m"
+#define ANSI_COLOR_MAGENTA_BOLD "\033[1;31m"
+#define ANSI_COLOR_CYAN_BOLD    "\033[1;31m"
 
-#define ANSI_COLOR_RESET   "\001\x1b[0m\001"
+#define ANSI_COLOR_RESET   "\033[0m"
+
 #else
 #define ANSI_COLOR_RED
 #define ANSI_COLOR_GREEN
