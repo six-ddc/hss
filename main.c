@@ -104,8 +104,31 @@ add_hostfile(const char *fname) {
     char *p;
     FILE *f = fopen(fname, "r");
     if (!f) {
-        eprintf("can not open file %s (%s)\n", fname, strerror(errno));
-        exit(1);
+        if (errno == ENOENT) {
+            // No file? Try ~/.hss directory
+            char nameBuf[1024];
+
+            char *homeDir = getenv("HOME");
+            if (!homeDir) {
+                eprintf("no home directory set\n");
+                exit(1);
+            }
+            
+            int chars = snprintf(nameBuf, 1024, "%s/.hss/%s", homeDir, fname);
+            if (chars >= 1024) {
+                eprintf("hostfile name is too long\n");
+                exit(1);
+            } else if (chars < 0) {
+                eprintf("encoding error while locating hostfile %s\n", fname);
+                exit(1);
+            }
+
+            f = fopen(nameBuf, "r");
+        }
+        if (!f) {
+            eprintf("can not open file %s (%s)\n", fname, strerror(errno));
+            exit(1);
+        }
     }
 
     while (fgets(line, sizeof(line), f)) {
@@ -156,7 +179,7 @@ void
 parse_opts(int argc, char **argv) {
     int ret;
     int opt;
-
+    
     const char *short_opts = "hif:H:c:u:o:l:vV";
 
     pconfig = calloc(1, sizeof(struct hss_config));
