@@ -230,6 +230,9 @@ exec_ssh_cmd(struct slot *pslot, int argc, char **argv) {
             ssh_argv[idx++] = pslot->ssh_argv[i];
         }
     }
+
+    ssh_argv[idx++] = "TERM=xterm-mono";
+
     for (i = 0; i < argc; ++i) {
         ssh_argv[idx++] = argv[i];
     }
