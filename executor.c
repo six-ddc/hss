@@ -42,6 +42,32 @@ print_line(struct slot *pslot, int io_type, sstring buf, void *data) {
     fflush(stdout);
 }
 
+//return success flag
+int
+insure_folder_exists(char *subFolder) {
+
+    char nameBuf[1024];
+    size_t chars;
+    const char *homeDir = getenv("HOME");
+    if (!homeDir) {
+        eprintf("no home directory set\n");
+        return false;
+    }
+
+	//creates the parent logs folder
+    chars = snprintf(nameBuf, 1024, "%s/%s", homeDir,subFolder);
+    if (chars >= 1024) {
+        eprintf("file name too long for %s\n", subFolder);
+        return false;
+    } else if (chars < 0) {
+        eprintf("failed to encode file name for %s\n", subFolder);
+        return false;
+    }
+    
+    //return zero on success, or -1 if an error occurred
+    return mkdir(nameBuf, S_IRWXU | S_IRWXG)==0;
+}
+
 static FILE *
 server_log_file(const struct slot *pslot) {
     char nameBuf[1024];
@@ -55,9 +81,10 @@ server_log_file(const struct slot *pslot) {
         return NULL;
     }
 
+    insure_folder_exists(".hss");
 	//creates the parent logs folder
-    chars = snprintf(nameBuf, 1024, "%s/.hss/logs/", homeDir);
-    mkdir(nameBuf, S_IRWXU | S_IRWXG);
+    insure_folder_exists(".hss/logs");
+
 
     chars = snprintf(nameBuf, 1024, "%s/.hss/logs/%s/", homeDir, pslot->host);
     if (chars >= 1024) {

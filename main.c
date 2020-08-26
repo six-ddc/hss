@@ -274,7 +274,9 @@ main(int argc, char **argv) {
     rl_initialize();
 
     using_history();
-    sprintf(history_file, "%s/%s", getenv("HOME"), ".hss_history");
+    insure_folder_exists(".hss");
+    insure_folder_exists(".hss/logs");    
+    sprintf(history_file, "%s/.hss/logs/%s", getenv("HOME"), "history.log");
     read_history(history_file);
 
     update_completion_function();

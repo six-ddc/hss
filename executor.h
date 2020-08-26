@@ -17,4 +17,8 @@ exec_remote_cmd_args(struct slot *pslot_list, int argc, char **argv, int concurr
 int
 sync_exec_remote_cmd(struct slot *pslot_list, char *cmd, sstring *out, sstring *err);
 
+
+int
+insure_folder_exists(char *subFolder);
+
 #endif //_HSS_EXECUTOR_H_
