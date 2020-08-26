@@ -156,6 +156,7 @@ void usage(const char *msg) {
                 "  -o file        write remote command output to a file\n"
                 "  -O             write remote command output to log file per server\n"
                 "  -i             force use a vi-style line editing interface\n"
+                "  -s             transfer files over scp\n"
                 "  -v             be more verbose\n"
                 "  -V             show program version\n"
                 "  -h             display this message\n"
@@ -181,7 +182,7 @@ parse_opts(int argc, char **argv) {
     int ret;
     int opt;
 
-    const char *short_opts = "hif:H:c:u:o:Ol:vV";
+    const char *short_opts = "hif:H:c:u:o:Ol:svV";
 
     pconfig = calloc(1, sizeof(struct hss_config));
 
@@ -217,6 +218,9 @@ parse_opts(int argc, char **argv) {
                 break;
             case 'O':
                 pconfig->split_server_logs = true;
+                break;
+            case 's':
+                pconfig->mode = MODE_SCP;
                 break;
             case 'v':
                 pconfig->verbose = true;

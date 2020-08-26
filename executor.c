@@ -19,6 +19,8 @@
 sigset_t sigmask;
 sigset_t osigmask;
 
+typedef void (*executor)(struct slot *pslot, int argc, char **argv);
+
 #define UPLOAD "0"
 #define DOWNLOAD "1"
 
@@ -83,6 +85,30 @@ server_log_file(const struct slot *pslot) {
     }
 
     return output;
+}
+
+static char *
+scp_remote_filepath(const char *filename, struct slot *pslot) {
+    char host[256];
+
+    if (!strchr(pslot->host, '@')) {
+        int err = snprintf(host, sizeof(host), "%s@%s", pconfig->user, pslot->host);
+        if (err == 0) {
+            eprintf("host too long for %s\n", pslot->host);
+            return NULL;
+        }
+    } else {
+        if (strlen(pslot->host) >= 256) {
+            eprintf("host too long for %s\n", pslot->host);
+            return NULL;
+        }
+        strcpy(host, pslot->host);
+    }
+
+    size_t filepathLen = strlen(filename) + strlen(host) + 2;
+    char *filepath = malloc(filepathLen);
+    snprintf(filepath, filepathLen, "%s:%s", host, filename);
+    return filepath;
 }
 
 static void
@@ -251,8 +277,74 @@ exec_ssh_cmd(struct slot *pslot, int argc, char **argv) {
     exit(1);
 }
 
+static void
+exec_scp_cmd(struct slot *pslot, int argc, char **argv) {
+    char *scp_argv[128];
+    int idx = 0;
+    int i;
+    int ret;
+
+    close(STDIN_FILENO);
+
+    close(pslot->io.out[PIPE_READ_END]);
+    close(pslot->io.err[PIPE_READ_END]);
+
+    if (dup2(pslot->io.out[PIPE_WRITE_END], STDOUT_FILENO) == -1) {
+        eprintf("failed to dup stdout: %s\n", strerror(errno));
+    }
+    if (dup2(pslot->io.err[PIPE_WRITE_END], STDERR_FILENO) == -1) {
+        eprintf("failed to dup stderr: %s\n", strerror(errno));
+    }
+
+    scp_argv[idx++] = "-q";
+    scp_argv[idx++] = "-oNumberOfPasswordPrompts=0";
+    scp_argv[idx++] = "-oStrictHostKeyChecking=no";
+
+    for (i = 0; i < pconfig->common_options_argc; ++i) {
+        scp_argv[idx++] = (char *) pconfig->common_options_argv[i];
+    }
+
+    for (i = 0; i < pslot->ssh_argc - 1; ++i) {
+        scp_argv[idx++] = pslot->ssh_argv[i];
+    }
+    if (argc < 1) {
+        eprintf("scp requires at least one argument\n");
+        exit(1);
+    } else if (argc == 1) {
+        // Transfer file to /tmp
+        scp_argv[idx++] = argv[0];
+        scp_argv[idx++] = scp_remote_filepath("/tmp/", pslot);
+    } else if (argc == 2) {
+        if (strncmp(argv[0], "remote:", 7) == 0) {
+            // TODO
+            eprintf("fetching files not yet supported\n");
+            exit(1);
+        } else if (strncmp(argv[1], "remote:", 7) == 0) {
+            scp_argv[idx++] = argv[0];
+            scp_argv[idx++] = scp_remote_filepath(argv[1] + 7, pslot);
+        } else {
+            eprintf("no remote file specified (\"%s\", \"%s\")\n", argv[0], argv[1]);
+            exit(1);
+        }
+    } else {
+        eprintf("scp requires at most two arguments, %i provided\n", argc);
+        exit(1);
+    }
+    scp_argv[idx++] = NULL;
+
+    ret = execvp("scp", scp_argv);
+
+    eprintf("failed to exec the scp binary: (%d) %s\n", ret, strerror(errno));
+    exit(1);
+}
+
+executor executors[] = {
+    [MODE_SSH] = exec_ssh_cmd,
+    [MODE_SCP] = exec_scp_cmd,
+};
+
 static int
-exec_command_foreach(struct slot *pslot_list, void (*fn_fork)(struct slot *, int, char **), int argc, char **argv,
+exec_command_foreach(struct slot *pslot_list, executor fn_fork, int argc, char **argv,
                      int concurrency) {
     struct pollfd *pfd;
     struct slot *pslot_head = pslot_list->next;
@@ -336,7 +428,7 @@ exec_remote_cmd(struct slot *pslot_list, char *cmd, int concurrency) {
 
 int
 exec_remote_cmd_args(struct slot *pslot_list, int argc, char **argv, int concurrency) {
-    return exec_command_foreach(pslot_list, exec_ssh_cmd, argc, argv, concurrency);
+    return exec_command_foreach(pslot_list, executors[pconfig->mode], argc, argv, concurrency);
 }
 
 int
