@@ -359,8 +359,23 @@ exec_scp_cmd(struct slot *pslot, int argc, char **argv) {
         scp_argv[idx++] = scp_remote_filepath("/tmp/", pslot);
     } else if (argc == 2) {
         if (strncmp(argv[0], "remote:", 7) == 0) {
+            char dstBuffer[1024];
+            if (strlen(argv[1]) > 1022) {
+                eprintf("destination filename too long for %s\n", pslot->host);
+            }
+            if (argv[1][strlen(argv[1]) - 1] != '/') {
+                strncpy(dstBuffer, argv[1], 1022);
+                strncat(dstBuffer, "/", 1023);
+            } else {
+                strncpy(dstBuffer, argv[1], 1023);
+            }
+            mkdir(dstBuffer, S_IRWXU | S_IRWXG);
+
             scp_argv[idx++] = scp_remote_filepath(argv[0] + 7, pslot);
-            scp_argv[idx++] = server_specific_directory(argv[1], pslot);
+            scp_argv[idx++] = server_specific_directory(dstBuffer, pslot);
+            if (scp_argv[idx - 1] == NULL) {
+                eprintf("destination filename too long for %s\n", pslot->host);
+            }
         } else if (strncmp(argv[1], "remote:", 7) == 0) {
             scp_argv[idx++] = argv[0];
             scp_argv[idx++] = scp_remote_filepath(argv[1] + 7, pslot);
