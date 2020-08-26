@@ -231,6 +231,16 @@ exec_ssh_cmd(struct slot *pslot, int argc, char **argv) {
     }
     ssh_argv[idx++] = NULL;
 
+
+    if (pslot->output != stdout) {
+        printf("$");
+        for (int i = 0; i < argc; i++) {
+            printf(" %s", argv[i]);
+        }
+        printf("\n");
+        fflush(stdout);
+    }
+
     ret = execvp("ssh", ssh_argv);
 
     eprintf("failed to exec the ssh binary: (%d) %s\n", ret, strerror(errno));
