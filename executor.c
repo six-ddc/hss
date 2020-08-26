@@ -44,6 +44,52 @@ print_line(struct slot *pslot, int io_type, sstring buf, void *data) {
     fflush(stdout);
 }
 
+static char *
+server_specific_directory(const char *path, const struct slot *pslot) {
+    char nameBuf[1024];
+    char *end = nameBuf;
+    size_t chars;
+    size_t remain = 1023;
+
+    // find text after last /
+    char *name = strrchr(path, '/') + 1;
+
+    chars = name - path;
+    if (chars > remain) {
+        return NULL;
+    }
+    memcpy(end, path, chars);
+    remain -= chars;
+    end += chars;
+
+    // append host
+    chars = strlen(pslot->host);
+    if (chars > remain) {
+        return NULL;
+    }
+    strncpy(end, pslot->host, remain);
+    remain -= chars;
+    end += chars;
+    
+    mkdir(nameBuf, S_IRWXU | S_IRWXG);
+
+    // Append filename
+    name--; // Take into account /
+    
+    chars = strlen(name);
+    if (chars > remain) {
+        return NULL;
+    }
+
+    strncpy(end, name, remain);
+    remain -= chars;
+    end += chars;
+
+    char *dirName = malloc(end - nameBuf + 1);
+    strcpy(dirName, nameBuf);
+    return dirName;
+}
+
 static FILE *
 server_log_file(const struct slot *pslot) {
     char nameBuf[1024];
@@ -61,28 +107,25 @@ server_log_file(const struct slot *pslot) {
     chars = snprintf(nameBuf, 1024, "%s/.hss/logs/", homeDir);
     mkdir(nameBuf, S_IRWXU | S_IRWXG);
 
-    chars = snprintf(nameBuf, 1024, "%s/.hss/logs/%s/", homeDir, pslot->host);
-    if (chars >= 1024) {
-        eprintf("file name too long for %s\n", pslot->host);
-        return NULL;
-    } else if (chars < 0) {
-        eprintf("failed to encode file name for %s\n", pslot->host);
-        return NULL;
-    }
-
-    mkdir(nameBuf, S_IRWXU | S_IRWXG);
-
     chars = strftime(nameBuf + chars, 1024 - chars, "%F.log", localtime(&now));
     if (chars == 0) {
         eprintf("file name too long for %s\n", pslot->host);
         return NULL;
     }
 
-    output = fopen(nameBuf, "a");
-    if (!output) {
-        eprintf("can not open file %s (%s)\n", nameBuf, strerror(errno));
+    char *fileName = server_specific_directory(nameBuf, pslot);
+    if (fileName == NULL) {
+        eprintf("file name too long for %s\n", pslot->host);
         return NULL;
     }
+
+    output = fopen(fileName, "a");
+    if (!output) {
+        eprintf("can not open file %s (%s)\n", fileName, strerror(errno));
+        free(fileName);
+        return NULL;
+    }
+    free(fileName);
 
     return output;
 }
@@ -316,9 +359,8 @@ exec_scp_cmd(struct slot *pslot, int argc, char **argv) {
         scp_argv[idx++] = scp_remote_filepath("/tmp/", pslot);
     } else if (argc == 2) {
         if (strncmp(argv[0], "remote:", 7) == 0) {
-            // TODO
-            eprintf("fetching files not yet supported\n");
-            exit(1);
+            scp_argv[idx++] = scp_remote_filepath(argv[0] + 7, pslot);
+            scp_argv[idx++] = server_specific_directory(argv[1], pslot);
         } else if (strncmp(argv[1], "remote:", 7) == 0) {
             scp_argv[idx++] = argv[0];
             scp_argv[idx++] = scp_remote_filepath(argv[1] + 7, pslot);
