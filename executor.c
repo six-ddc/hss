@@ -170,7 +170,7 @@ static char *
 scp_remote_filepath(const char *filename, struct slot *pslot) {
     char host[256];
 
-    if (!strchr(pslot->host, '@')) {
+    if (!strchr(pslot->host, '@') && pconfig->user) {
         int err = snprintf(host, sizeof(host), "%s@%s", pconfig->user, pslot->host);
         if (err == 0) {
             eprintf("host too long for %s\n", pslot->host);
