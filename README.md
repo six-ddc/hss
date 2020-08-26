@@ -28,6 +28,10 @@ Options:
   -u user        the default user name to use when connecting to the remote server
   -c opts        specify the common ssh options (i.e. '-p 22 -i identity_file')
   -o file        write remote command output to a file
+  -O             write remote command output to one log file per server
+				 > file name like ~/.hss/<server>/date_per_day.log
+  -s             transfer files over scp
+
   -i             force use a vi-style line editing interface
   -v             be more verbose
   -V             show program version
@@ -39,6 +43,31 @@ For more information, see https://github.com/six-ddc/hss
 * This is a screenshot
 
 [![asciicast](https://asciinema.org/a/233954.svg)](https://asciinema.org/a/233954)
+
+### Hosts files
+
+You can pass "-f hostfile" where hostfile is a full path of a plain text file.
+
+The application also uses folder named .hss/ in home as a default for the host files.
+if the path given is not found, **the program will look for the file in .hss folder.**
+You can then maintain easily hosts groups in a central way.
+
+## scp transfer files
+
+Please look at these commands:
+
+	hss -f demo -s /path/to/main.c  remote:/tmp
+	hss -f demo -s remote:/path/to/main.c  /tmp
+
+You have to specify which side is the remote machine as SCP can go in either direction.
+You specify it  always using "remote" keyword (it is not an alias)
+
+you can also type:
+
+	hss -f demo -s /path/to/main.c
+
+In this case /tmp is used as the default target.
+
 
 ## How to install it?
 
