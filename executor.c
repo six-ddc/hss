@@ -133,7 +133,16 @@ server_log_file(const struct slot *pslot) {
 	//creates the parent logs folder
     insure_folder_exists(".hss/logs");
 
-
+    chars = snprintf(nameBuf, 1024, "%s/.hss/logs/", homeDir);
+    
+    if (chars >= 1024) {
+        eprintf("file name too long for %s\n", pslot->host);
+        return NULL;
+    } else if (chars < 0) {
+        eprintf("failed to encode file name for %s\n", pslot->host);
+        return NULL;
+    }
+    
     chars = strftime(nameBuf + chars, 1024 - chars, "%F.log", localtime(&now));
     if (chars == 0) {
         eprintf("file name too long for %s\n", pslot->host);
