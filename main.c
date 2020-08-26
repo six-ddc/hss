@@ -154,6 +154,7 @@ void usage(const char *msg) {
                 "  -u user        the default user name to use when connecting to the remote server\n"
                 "  -c opts        specify the common ssh options (i.e. '-p 22 -i identity_file')\n"
                 "  -o file        write remote command output to a file\n"
+                "  -O             write remote command output to log file per server\n"
                 "  -i             force use a vi-style line editing interface\n"
                 "  -v             be more verbose\n"
                 "  -V             show program version\n"
@@ -179,8 +180,8 @@ void
 parse_opts(int argc, char **argv) {
     int ret;
     int opt;
-    
-    const char *short_opts = "hif:H:c:u:o:l:vV";
+
+    const char *short_opts = "hif:H:c:u:o:Ol:vV";
 
     pconfig = calloc(1, sizeof(struct hss_config));
 
@@ -213,6 +214,9 @@ parse_opts(int argc, char **argv) {
                 break;
             case 'o':
                 pconfig->output_file = new_string(optarg);
+                break;
+            case 'O':
+                pconfig->split_server_logs = true;
                 break;
             case 'v':
                 pconfig->verbose = true;

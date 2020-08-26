@@ -55,6 +55,7 @@ extern struct hss_config {
     int common_options_argc;
     const char **common_options_argv;
     char *output_file;
+    bool split_server_logs;
     int concurrency;
 } *pconfig;
 
