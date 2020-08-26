@@ -51,7 +51,11 @@ server_log_file(const struct slot *pslot) {
         return NULL;
     }
 
-    chars = snprintf(nameBuf, 1024, "%s/.hss/%s/", homeDir, pslot->host);
+	//creates the parent logs folder
+    chars = snprintf(nameBuf, 1024, "%s/.hss/logs/", homeDir);
+    mkdir(nameBuf, S_IRWXU | S_IRWXG);
+
+    chars = snprintf(nameBuf, 1024, "%s/.hss/logs/%s/", homeDir, pslot->host);
     if (chars >= 1024) {
         eprintf("file name too long for %s\n", pslot->host);
         return NULL;
@@ -62,7 +66,7 @@ server_log_file(const struct slot *pslot) {
 
     mkdir(nameBuf, S_IRWXU | S_IRWXG);
 
-    chars = strftime(nameBuf + chars, 1024 - chars, "%F", localtime(&now));
+    chars = strftime(nameBuf + chars, 1024 - chars, "%F.log", localtime(&now));
     if (chars == 0) {
         eprintf("file name too long for %s\n", pslot->host);
         return NULL;
