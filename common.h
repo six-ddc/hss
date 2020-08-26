@@ -49,6 +49,11 @@
 
 extern struct slot *slots;
 
+enum mode {
+    MODE_SSH,
+    MODE_SCP,
+};
+
 extern struct hss_config {
     bool verbose;
     char *user;
@@ -57,6 +62,7 @@ extern struct hss_config {
     char *output_file;
     bool split_server_logs;
     int concurrency;
+    enum mode mode;
 } *pconfig;
 
 extern int stdout_isatty;
