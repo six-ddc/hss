@@ -27,15 +27,19 @@ volatile int alive_children = 0;
 static void
 print_line(struct slot *pslot, int io_type, sstring buf, void *data) {
     FILE *output = (FILE *) data;
-    if (output == stdout && stdout_isatty) {
+    if (stdout_isatty) {
         if (io_type == STDOUT_FILENO) {
             printf(ANSI_COLOR_GREEN "[O] %s -> " ANSI_COLOR_RESET, pslot->host);
         } else {
             printf(ANSI_COLOR_GREEN "[E] %s -> " ANSI_COLOR_RESET, pslot->host);
         }
     }
-    fwrite(buf, 1, string_length(buf), output);
-    fflush(output);
+    if (output != stdout) {
+        fwrite(buf, 1, string_length(buf), output);
+        fflush(output);
+    }
+    fwrite(buf, 1, string_length(buf), stdout);
+    fflush(stdout);
 }
 
 static FILE *
