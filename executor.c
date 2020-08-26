@@ -1,5 +1,7 @@
+#include <sys/stat.h>
 #include <sys/wait.h>
 #include <poll.h>
+#include <time.h>
 #include "common.h"
 #include "sstring.h"
 #include "executor.h"
@@ -34,6 +36,45 @@ print_line(struct slot *pslot, int io_type, sstring buf, void *data) {
     }
     fwrite(buf, 1, string_length(buf), output);
     fflush(output);
+}
+
+static FILE *
+server_log_file(const struct slot *pslot) {
+    char nameBuf[1024];
+    size_t chars;
+    FILE *output;
+    time_t now = time(NULL);
+
+    const char *homeDir = getenv("HOME");
+    if (!homeDir) {
+        eprintf("no home directory set\n");
+        return NULL;
+    }
+
+    chars = snprintf(nameBuf, 1024, "%s/.hss/%s/", homeDir, pslot->host);
+    if (chars >= 1024) {
+        eprintf("file name too long for %s\n", pslot->host);
+        return NULL;
+    } else if (chars < 0) {
+        eprintf("failed to encode file name for %s\n", pslot->host);
+        return NULL;
+    }
+
+    mkdir(nameBuf, S_IRWXU | S_IRWXG);
+
+    chars = strftime(nameBuf + chars, 1024 - chars, "%F", localtime(&now));
+    if (chars == 0) {
+        eprintf("file name too long for %s\n", pslot->host);
+        return NULL;
+    }
+
+    output = fopen(nameBuf, "a");
+    if (!output) {
+        eprintf("can not open file %s (%s)\n", nameBuf, strerror(errno));
+        return NULL;
+    }
+
+    return output;
 }
 
 static void
@@ -98,17 +139,17 @@ poll_alive_slots(struct slot *pslot, struct pollfd *pfd, size_t *cnt) {
 }
 
 static void
-read_alive_slots(struct slot *pslot, struct pollfd *pfd, FILE *output) {
+read_alive_slots(struct slot *pslot, struct pollfd *pfd) {
     while (pslot) {
         if (!pslot->alive || pslot->poll_index < 0) {
             pslot = pslot->next;
             continue;
         }
         if (pfd[pslot->poll_index].revents & POLLIN) {
-            slot_read_line(pslot, STDOUT_FILENO, print_line, output);
+            slot_read_line(pslot, STDOUT_FILENO, print_line, pslot->output);
         }
         if (pfd[pslot->poll_index + 1].revents & POLLIN) {
-            slot_read_line(pslot, STDERR_FILENO, print_line, output);
+            slot_read_line(pslot, STDERR_FILENO, print_line, pslot->output);
         }
         pslot = pslot->next;
     }
@@ -199,14 +240,14 @@ exec_command_foreach(struct slot *pslot_list, void (*fn_fork)(struct slot *, int
     struct slot *pslot_head = pslot_list->next;
     struct slot *pslot = pslot_head;
     int timeout;
-    FILE *output;
+    FILE *output = NULL;
     size_t cnt = 0;
 
     if (!pslot) {
         return 0;
     }
 
-    if (pconfig->output_file) {
+    if (pconfig->output_file && !pconfig->split_server_logs) {
         output = fopen(pconfig->output_file, "a");
         if (!output) {
             eprintf("can not open file %s (%s)\n", pconfig->output_file, strerror(errno));
@@ -219,7 +260,14 @@ exec_command_foreach(struct slot *pslot_list, void (*fn_fork)(struct slot *, int
     while (pslot) {
         // poll stdout & stderr
         cnt += 2;
-        pslot->output = output;
+        if (pconfig->split_server_logs) {
+            pslot->output = server_log_file(pslot);
+            if (!pslot->output) {
+                return -1;
+            }
+        } else {
+            pslot->output = output;
+        }
         pslot = pslot->next;
     }
     pfd = calloc(cnt, sizeof(struct pollfd));
@@ -242,12 +290,18 @@ exec_command_foreach(struct slot *pslot_list, void (*fn_fork)(struct slot *, int
         timeout = pslot ? 0 : -1;
 
         if (poll(pfd, (nfds_t) cnt, timeout) > 0) {
-            read_alive_slots(pslot_head, pfd, output);
+            read_alive_slots(pslot_head, pfd);
         }
         UNBLOCK_SIGCHLD;
     }
 
-    if (output != stdout) {
+    if (pconfig->split_server_logs) {
+        pslot = pslot_head;
+        while (pslot) {
+            fclose(pslot->output);
+            pslot = pslot->next;
+        }
+    } else if (output != stdout) {
         fclose(output);
     }
 
