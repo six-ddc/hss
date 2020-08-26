@@ -90,6 +90,32 @@ server_specific_directory(const char *path, const struct slot *pslot) {
     return dirName;
 }
 
+//return success flag
+int
+insure_folder_exists(char *subFolder) {
+
+    char nameBuf[1024];
+    size_t chars;
+    const char *homeDir = getenv("HOME");
+    if (!homeDir) {
+        eprintf("no home directory set\n");
+        return false;
+    }
+
+	//creates the parent logs folder
+    chars = snprintf(nameBuf, 1024, "%s/%s", homeDir,subFolder);
+    if (chars >= 1024) {
+        eprintf("file name too long for %s\n", subFolder);
+        return false;
+    } else if (chars < 0) {
+        eprintf("failed to encode file name for %s\n", subFolder);
+        return false;
+    }
+    
+    //return zero on success, or -1 if an error occurred
+    return mkdir(nameBuf, S_IRWXU | S_IRWXG)==0;
+}
+
 static FILE *
 server_log_file(const struct slot *pslot) {
     char nameBuf[1024];
@@ -103,9 +129,10 @@ server_log_file(const struct slot *pslot) {
         return NULL;
     }
 
+    insure_folder_exists(".hss");
 	//creates the parent logs folder
-    chars = snprintf(nameBuf, 1024, "%s/.hss/logs/", homeDir);
-    mkdir(nameBuf, S_IRWXU | S_IRWXG);
+    insure_folder_exists(".hss/logs");
+
 
     chars = strftime(nameBuf + chars, 1024 - chars, "%F.log", localtime(&now));
     if (chars == 0) {
@@ -299,6 +326,9 @@ exec_ssh_cmd(struct slot *pslot, int argc, char **argv) {
             ssh_argv[idx++] = pslot->ssh_argv[i];
         }
     }
+
+    ssh_argv[idx++] = "TERM=xterm-mono";
+
     for (i = 0; i < argc; ++i) {
         ssh_argv[idx++] = argv[i];
     }
