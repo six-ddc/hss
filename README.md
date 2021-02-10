@@ -44,9 +44,18 @@ For more information, see https://github.com/six-ddc/hss
 
 * MacOS
 
-```bash
-brew install hss
-```
+    * ...via [Homebrew](https://brew.sh):
+
+    ```bash
+    brew install hss
+    ```
+    
+    * ...via [MacPorts](https://www.macports.org):
+
+    ```bash
+    sudo port selfupdate
+    sudo port install hss
+    ```
 
 * Linux
 
