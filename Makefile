@@ -12,22 +12,22 @@ INSTALL_BIN?=/usr/local/bin
 HSS_BIN=hss
 
 main.o: main.c
-	$(CC) $(CFLAGS) -c main.c -o main.o
+	$(CC) $(CFLAGS) $(CPPFLAGS) -c main.c -o main.o
 
 sstring.o: sstring.c
-	$(CC) $(CFLAGS) -c sstring.c -o sstring.o
+	$(CC) $(CFLAGS) $(CPPFLAGS) -c sstring.c -o sstring.o
 
 slot.o: slot.c
-	$(CC) $(CFLAGS) -c slot.c -o slot.o
+	$(CC) $(CFLAGS) $(CPPFLAGS) -c slot.c -o slot.o
 
 completion.o: completion.c
-	$(CC) $(CFLAGS) -c completion.c -o completion.o
+	$(CC) $(CFLAGS) $(CPPFLAGS) -c completion.c -o completion.o
 
 executor.o: executor.c
-	$(CC) $(CFLAGS) -c executor.c -o executor.o
+	$(CC) $(CFLAGS) $(CPPFLAGS) -c executor.c -o executor.o
 
 all: main.o sstring.o slot.o completion.o executor.o
-	$(CC) $(CFLAGS) main.o sstring.o slot.o completion.o executor.o $(LIBS) -o $(HSS_BIN) $(LDFLAGS)
+	$(CC) $(CFLAGS) $(CPPFLAGS) main.o sstring.o slot.o completion.o executor.o $(LIBS) -o $(HSS_BIN) $(LDFLAGS)
 
 install:
 	@mkdir -p $(INSTALL_BIN)
