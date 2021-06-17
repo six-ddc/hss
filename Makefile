@@ -1,10 +1,20 @@
 default: all
 
-CFLAGS=-I/usr/local/opt/readline/include -O3 -Wall
+uname_M := $(shell sh -c 'uname -m 2>/dev/null || echo not')
+uname_S := $(shell sh -c 'uname -s 2>/dev/null || echo not')
+
+CFLAGS=-O3 -Wall
 LIBS=-lreadline
 
-ifeq ($(shell uname), Darwin)
-	LDFLAGS=-L/usr/local/opt/readline/lib
+ifeq ($(uname_S),Darwin)
+ifeq ($(uname_M),arm64)
+	# Homebrew arm64 uses /opt/homebrew as HOMEBREW_PREFIX
+	CFLAGS+=-I/opt/homebrew/opt/readline/include
+	LDFLAGS+=-L/opt/homebrew/opt/readline/lib
+else
+	CFLAGS+=-I/usr/local/opt/readline/include
+	LDFLAGS+=-L/usr/local/opt/readline/lib
+endif
 endif
 
 INSTALL=install
