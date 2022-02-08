@@ -9,7 +9,7 @@
 #include "completion.h"
 #include "slot.h"
 
-const char *HSS_VERSION = "1.7";
+const char *HSS_VERSION = "1.9";
 
 char history_file[512];
 
