@@ -3,6 +3,7 @@
 #include <locale.h>
 #include <setjmp.h>
 #include <getopt.h>
+#include <sys/stat.h>
 
 #include "common.h"
 #include "executor.h"
@@ -146,6 +147,65 @@ void usage(const char *msg) {
     }
 }
 
+static int
+mkdir_p(const char *path) {
+    char tmp[512];
+    char *p = NULL;
+    size_t len;
+
+    snprintf(tmp, sizeof(tmp), "%s", path);
+    len = strlen(tmp);
+    if (tmp[len - 1] == '/')
+        tmp[len - 1] = 0;
+    for (p = tmp + 1; *p; p++) {
+        if (*p == '/') {
+            *p = 0;
+            if (mkdir(tmp, 0755) != 0 && errno != EEXIST)
+                return -1;
+            *p = '/';
+        }
+    }
+    if (mkdir(tmp, 0755) != 0 && errno != EEXIST)
+        return -1;
+    return 0;
+}
+
+static void
+init_history_file() {
+    const char *history_path = getenv("HSS_HISTORY_FILE");
+    
+    if (history_path != NULL) {
+        /* Use custom path if HSS_HISTORY_FILE is set */
+        strncpy(history_file, history_path, sizeof(history_file) - 1);
+        history_file[sizeof(history_file) - 1] = '\0';
+    } else {
+        /* Try XDG_STATE_HOME */
+        const char *xdg_state = getenv("XDG_STATE_HOME");
+        if (xdg_state != NULL) {
+            snprintf(history_file, sizeof(history_file), "%s/hss", xdg_state);
+            /* Create directory if it doesn't exist */
+            mkdir_p(history_file);
+            snprintf(history_file, sizeof(history_file), "%s/hss/history", xdg_state);
+        } else {
+            const char *home = getenv("HOME");
+            if (home != NULL) {
+                /* Try ~/.local/state/hss/history (default XDG location) */
+                snprintf(history_file, sizeof(history_file), "%s/.local/state/hss", home);
+                if (mkdir_p(history_file) == 0) {
+                    /* Directory exists or was created, use XDG path */
+                    snprintf(history_file, sizeof(history_file), "%s/.local/state/hss/history", home);
+                } else {
+                    /* Fall back to legacy location */
+                    snprintf(history_file, sizeof(history_file), "%s/.hss_history", home);
+                }
+            } else {
+                /* Last resort: current directory */
+                strcpy(history_file, ".hss_history");
+            }
+        }
+    }
+}
+
 void print_version() {
     printf("hss - %s\n", HSS_VERSION);
     printf("libreadline - %s\n", rl_library_version);
@@ -247,7 +307,7 @@ main(int argc, char **argv) {
     rl_initialize();
 
     using_history();
-    sprintf(history_file, "%s/%s", getenv("HOME"), ".hss_history");
+    init_history_file();
     read_history(history_file);
 
     update_completion_function();

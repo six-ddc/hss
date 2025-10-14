@@ -104,9 +104,18 @@ Passthrough of `ssh` arguments are supported. For example, by specify `-c '-oCon
 
 The interactive input is implemented on `libreadline`, supporting command and path completion from remote, history storage and searching, moving around, etc. (please refer to [readline](http://cnswww.cns.cwru.edu/php/chet/readline/readline.html#SEC1) for more)
 
-* Command history is stored in file `~/.hss_history`.
+* Command history is stored in `~/.local/state/hss/history` by default (following XDG Base Directory specification). Falls back to `~/.hss_history` for backward compatibility if the XDG directory cannot be created.
 * Completion of commands and paths are based on the first server in the list.
 * Path completion is available when the first input character is `/`, `~` or `.`.
+
+### Environment variables
+
+* `HSS_HISTORY_FILE` - Custom path for command history file. Takes precedence over XDG paths and legacy location.
+* `XDG_STATE_HOME` - Base directory for state files (defaults to `~/.local/state`). History will be stored in `$XDG_STATE_HOME/hss/history`.
+
+### Per-host color output
+
+Each host in your session is assigned a unique color from a rotating palette (green, yellow, blue, magenta, cyan) to make it easier to visually distinguish output from different servers in multi-host sessions.
 
 ## Goals of the future versions
 

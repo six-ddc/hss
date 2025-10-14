@@ -100,9 +100,12 @@ slot_reinit(struct slot *pslot) {
 void
 slot_append(struct slot *pslot_list, struct slot *next) {
     struct slot *pslot = pslot_list;
+    int slot_count = 0;
     while (pslot->next) {
         pslot = pslot->next;
+        slot_count++;
     }
+    next->color_index = slot_count;
     pslot->next = next;
 }
 

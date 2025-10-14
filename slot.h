@@ -27,6 +27,7 @@ slot {
     bool alive;
     int poll_index;
     FILE *output;
+    int color_index;
 
     sstring out_buff;
     sstring err_buff;
