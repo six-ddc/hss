@@ -26,10 +26,11 @@ static void
 print_line(struct slot *pslot, int io_type, sstring buf, void *data) {
     FILE *output = (FILE *) data;
     if (output == stdout && stdout_isatty) {
+        const char *color = HOST_COLORS[pslot->color_index % HOST_COLORS_COUNT];
         if (io_type == STDOUT_FILENO) {
-            printf(ANSI_COLOR_GREEN "[O] %s -> " ANSI_COLOR_RESET, pslot->host);
+            printf("%s[O] %s -> " ANSI_COLOR_RESET, color, pslot->host);
         } else {
-            printf(ANSI_COLOR_GREEN "[E] %s -> " ANSI_COLOR_RESET, pslot->host);
+            printf("%s[E] %s -> " ANSI_COLOR_RESET, color, pslot->host);
         }
     }
     fwrite(buf, 1, string_length(buf), output);

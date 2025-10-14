@@ -33,6 +33,16 @@
 
 #define ANSI_COLOR_RESET   "\033[0m"
 
+/* Color array for per-host output cycling */
+static const char *HOST_COLORS[] = {
+    ANSI_COLOR_GREEN,
+    ANSI_COLOR_YELLOW,
+    ANSI_COLOR_BLUE,
+    ANSI_COLOR_MAGENTA,
+    ANSI_COLOR_CYAN
+};
+#define HOST_COLORS_COUNT 5
+
 #else
 #define ANSI_COLOR_RED
 #define ANSI_COLOR_GREEN
